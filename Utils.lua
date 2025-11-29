@@ -1871,15 +1871,6 @@ if Cell.isWrath or Cell.isVanilla then
     elseif LOCALE_esES or LOCALE_esMX then
         MATCH_PATTERN = "Rango (%d+)"
         FORMAT_PATTERN = "Rango %d"
-    -- elseif LOCALE_itIT then -- not supported in classic
-    --     MATCH_PATTERN = "Grado (%d+)"
-    --     FORMAT_PATTERN = "Grado %d"
-    elseif LOCALE_koKR then
-        MATCH_PATTERN = "(%d+) 레벨"
-        FORMAT_PATTERN = "%d 레벨"
-    elseif LOCALE_ptBR then
-        MATCH_PATTERN = "Grau (%d+)"
-        FORMAT_PATTERN = "Grau %d"
     elseif LOCALE_ruRU then
         MATCH_PATTERN = "Уровень (%d+)"
         FORMAT_PATTERN = "Уровень %d"

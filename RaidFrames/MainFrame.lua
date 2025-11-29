@@ -76,6 +76,18 @@ Cell.frames.menuFrame = menuFrame
 menuFrame:SetAllPoints(anchorFrame)
 menuFrame:SetFrameLevel(27)
 
+menuFrame.fadeIn = menuFrame:CreateAnimationGroup()
+local fadeInAlpha = menuFrame.fadeIn:CreateAnimation("Alpha")
+fadeInAlpha:SetChange(1)
+fadeInAlpha:SetDuration(0.3)
+fadeInAlpha:SetSmoothing("OUT")
+
+menuFrame.fadeOut = menuFrame:CreateAnimationGroup()
+local fadeOutAlpha = menuFrame.fadeOut:CreateAnimation("Alpha")
+fadeOutAlpha:SetChange(-1)
+fadeOutAlpha:SetDuration(0.3)
+fadeOutAlpha:SetSmoothing("OUT")
+
 local options = Cell.CreateButton(menuFrame, "", "red", {20, 10}, false, true)
 P.Point(options, "TOPLEFT", menuFrame)
 RegisterButtonEvents(options)
@@ -191,50 +203,6 @@ P.Point(loadingBar, "BOTTOMRIGHT", options, -1, 1)
 -- end)
 --@end-debug@]==]
 
--------------------------------------------------
--- fadeIn & fadeOut
--------------------------------------------------
-local fadingIn, fadedIn, fadingOut, fadedOut
-menuFrame.fadeIn = menuFrame:CreateAnimationGroup()
-menuFrame.fadeIn.alpha = menuFrame.fadeIn:CreateAnimation("alpha")
-menuFrame.fadeIn.alpha:SetFromAlpha(0)
-menuFrame.fadeIn.alpha:SetToAlpha(1)
-menuFrame.fadeIn.alpha:SetDuration(0.5)
-menuFrame.fadeIn.alpha:SetSmoothing("OUT")
-menuFrame.fadeIn:SetScript("OnPlay", function()
-    menuFrame.fadeOut:Finish()
-    fadingIn = true
-
-    if Cell.frames.battleResFrame and not CellDB["tools"]["battleResTimer"][2] and CellDB["general"]["menuPosition"] == "top_bottom" then
-        Cell.frames.battleResFrame:OnMenuShow()
-    end
-end)
-menuFrame.fadeIn:SetScript("OnFinished", function()
-    fadingIn = false
-    fadingOut = false
-    fadedIn = true
-    fadedOut = false
-    menuFrame:SetAlpha(1)
-
-    if CellDB["general"]["fadeOut"] and not hoverFrame:IsMouseOver() then
-        menuFrame.fadeOut:Play()
-    end
-end)
-
-menuFrame.fadeOut = menuFrame:CreateAnimationGroup()
-menuFrame.fadeOut.alpha = menuFrame.fadeOut:CreateAnimation("alpha")
-menuFrame.fadeOut.alpha:SetFromAlpha(1)
-menuFrame.fadeOut.alpha:SetToAlpha(0)
-menuFrame.fadeOut.alpha:SetDuration(0.5)
-menuFrame.fadeOut.alpha:SetSmoothing("OUT")
-menuFrame.fadeOut:SetScript("OnPlay", function()
-    menuFrame.fadeIn:Finish()
-    fadingOut = true
-
-    if Cell.frames.battleResFrame and not CellDB["tools"]["battleResTimer"][2] and CellDB["general"]["menuPosition"] == "top_bottom" then
-        Cell.frames.battleResFrame:OnMenuHide()
-    end
-end)
 menuFrame.fadeOut:SetScript("OnFinished", function()
     fadingIn = false
     fadingOut = false

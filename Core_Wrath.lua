@@ -2,6 +2,11 @@
 local Cell = select(2, ...)
 _G.Cell = Cell
 
+Cell.isRetail = false
+Cell.isWrath = true
+Cell.isMists = false
+Cell.isVanilla = false
+
 ---@class Cell
 ---@field defaults table
 ---@field frames table

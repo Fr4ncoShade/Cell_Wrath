@@ -518,3 +518,43 @@ do
         end
     end
 end
+
+-- LocalizedClassList
+if not LocalizedClassList then
+    function LocalizedClassList(gender)
+        local t = {}
+        for i = 1, GetNumClasses() do
+            local name, tag, id = GetClassInfo(i)
+            if tag then
+                t[tag] = name
+            end
+        end
+        return t
+    end
+end
+
+-- Mixin
+if not Mixin then
+    function Mixin(object, ...)
+        for i = 1, select("#", ...) do
+            local mixin = select(i, ...)
+            for k, v in pairs(mixin) do
+                object[k] = v
+            end
+        end
+        return object
+    end
+end
+
+-- Fonts
+if not _G["CELL_FONT_WIDGET"] then
+    local font = CreateFont("CELL_FONT_WIDGET")
+    font:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+    font:SetTextColor(1, 1, 1, 1)
+end
+
+if not _G["CELL_FONT_WIDGET_TITLE"] then
+    local font = CreateFont("CELL_FONT_WIDGET_TITLE")
+    font:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+    font:SetTextColor(1, 0.82, 0, 1)
+end

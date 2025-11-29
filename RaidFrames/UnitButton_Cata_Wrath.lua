@@ -3648,8 +3648,7 @@ function CellUnitButton_OnLoad(button)
     button.widgets.damageFlashAG = damageFlashAG
 
     local alpha = damageFlashAG:CreateAnimation("Alpha")
-    alpha:SetFromAlpha(0.7)
-    alpha:SetToAlpha(0)
+    alpha:SetChange(-0.7)
     alpha:SetDuration(0.2)
 
     damageFlashAG:SetScript("OnPlay", function(self)
@@ -3658,11 +3657,6 @@ function CellUnitButton_OnLoad(button)
     damageFlashAG:SetScript("OnFinished", function(self)
         damageFlashTex:Hide()
     end)
-
-    -- smooth
-    Mixin(healthBar, SmoothStatusBarMixin)
-    Mixin(powerBar, SmoothStatusBarMixin)
-
     -- target highlight
     local targetHighlight = CreateFrame("Frame", name.."TargetHighlight", button, "BackdropTemplate")
     button.widgets.targetHighlight = targetHighlight
