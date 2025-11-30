@@ -1907,9 +1907,8 @@ do
 
     -- Fix 1: ScrollFrame eats clicks
     function PatchCreateScrollFrame()
-        print("[Polyfills] Patching CreateScrollFrame...")
-        if not Cell or not Cell.CreateScrollFrame then print("[Polyfills] Cell.CreateScrollFrame is nil!"); return end
-        if Cell._ScrollFramePatchedForBindings then print("[Polyfills] Already patched!"); return end
+        if not Cell or not Cell.CreateScrollFrame then return end
+        if Cell._ScrollFramePatchedForBindings then return end
         Cell._ScrollFramePatchedForBindings = true
 
         local orig_CreateScrollFrame = Cell.CreateScrollFrame
@@ -1926,7 +1925,6 @@ do
             
             return ret
         end
-        print("[Polyfills] CreateScrollFrame patched successfully.")
     end
 
     -- Fix 2: BindingListButton grids have too low frame level (6 vs 530+)
@@ -2105,8 +2103,6 @@ do
         if lib.startList then
             lib.startList["Autocast Shine"] = lib.AutoCastGlow_Start
         end
-        
-        print("[Polyfills] LibCustomGlow patched successfully.")
     end
 
     -- Add to the event handler
@@ -2114,7 +2110,6 @@ do
     f:RegisterEvent("ADDON_LOADED")
     f:SetScript("OnEvent", function(self, event, addonName)
         if addonName == "Cell_Wrath" then
-            print("[Polyfills] ADDON_LOADED: Cell_Wrath")
             PatchCreateScrollFrame()
             PatchBindingListButton()
             PatchGetClickCastingSpellList()
