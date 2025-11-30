@@ -46,6 +46,10 @@ Cell.isCata    = (Cell.flavor == "cata")
 Cell.isMists   = (Cell.flavor == "mists")
 Cell.isTWW     = false -- definitely not TWW on 3.3.5a
 
+if not IsMetaKeyDown then
+    function IsMetaKeyDown() return false end
+end
+
 -- Initialize supporters tables if not present
 Cell.supporters1 = Cell.supporters1 or {}
 Cell.supporters2 = Cell.supporters2 or {}
@@ -1829,15 +1833,7 @@ end)
 -- Click-Castings Fixes
 -------------------------------------------------
 do
-    local f = CreateFrame("Frame")
-    f:RegisterEvent("ADDON_LOADED")
-    f:SetScript("OnEvent", function(self, event, addonName)
-        if addonName == "Cell_Wrath" then
-            PatchCreateScrollFrame()
-            PatchBindingListButton()
-            self:UnregisterEvent("ADDON_LOADED")
-        end
-    end)
+
 
     -- Fix 1: ScrollFrame eats clicks
     function PatchCreateScrollFrame()
@@ -1878,4 +1874,31 @@ do
             return b
         end
     end
+
+    -- Fix 3: GetClickCastingSpellList fails with mixed-case class names
+    local function PatchGetClickCastingSpellList()
+        if not Cell or not Cell.funcs or not Cell.funcs.GetClickCastingSpellList then return end
+        if Cell._GetClickCastingSpellListPatched then return end
+        Cell._GetClickCastingSpellListPatched = true
+
+        local orig_GetClickCastingSpellList = Cell.funcs.GetClickCastingSpellList
+        Cell.funcs.GetClickCastingSpellList = function(class)
+            if class and type(class) == "string" then
+                class = string.upper(class)
+            end
+            return orig_GetClickCastingSpellList(class)
+        end
+    end
+
+    -- Add to the event handler
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("ADDON_LOADED")
+    f:SetScript("OnEvent", function(self, event, addonName)
+        if addonName == "Cell_Wrath" then
+            PatchCreateScrollFrame()
+            PatchBindingListButton()
+            PatchGetClickCastingSpellList()
+            self:UnregisterEvent("ADDON_LOADED")
+        end
+    end)
 end
