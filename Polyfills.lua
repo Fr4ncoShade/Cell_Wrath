@@ -50,6 +50,17 @@ if not IsMetaKeyDown then
     function IsMetaKeyDown() return false end
 end
 
+if not CreateVector2D then
+    function CreateVector2D(x, y)
+        return {
+            x = x or 0,
+            y = y or 0,
+            GetXY = function(self) return self.x, self.y end,
+            SetXY = function(self, x, y) self.x = x; self.y = y end
+        }
+    end
+end
+
 -- Initialize supporters tables if not present
 Cell.supporters1 = Cell.supporters1 or {}
 Cell.supporters2 = Cell.supporters2 or {}
@@ -1889,13 +1900,14 @@ do
 
     -- Fix 1: ScrollFrame eats clicks
     function PatchCreateScrollFrame()
-        if not Cell or not Cell.CreateScrollFrame then return end
-        if Cell._ScrollFramePatchedForBindings then return end
+        print("[Polyfills] Patching CreateScrollFrame...")
+        if not Cell or not Cell.CreateScrollFrame then print("[Polyfills] Cell.CreateScrollFrame is nil!"); return end
+        if Cell._ScrollFramePatchedForBindings then print("[Polyfills] Already patched!"); return end
         Cell._ScrollFramePatchedForBindings = true
 
         local orig_CreateScrollFrame = Cell.CreateScrollFrame
         Cell.CreateScrollFrame = function(parent, top, bottom, color, border)
-            orig_CreateScrollFrame(parent, top, bottom, color, border)
+            local ret = orig_CreateScrollFrame(parent, top, bottom, color, border)
 
             if parent:GetName() == "ClickCastingsTab_BindingsFrame" then
                 local scroll = parent.scrollFrame
@@ -1904,7 +1916,10 @@ do
                     if scroll.content and scroll.content.EnableMouse then scroll.content:EnableMouse(true) end
                 end
             end
+            
+            return ret
         end
+        print("[Polyfills] CreateScrollFrame patched successfully.")
     end
 
     -- Fix 2: BindingListButton grids have too low frame level (6 vs 530+)
@@ -1941,6 +1956,166 @@ do
             return orig_GetClickCastingSpellList(class)
         end
     end
+
+    -- Fix 4: Animation system missing SetScaleFrom/To, SetFromAlpha/ToAlpha
+    local function PatchAnimationSystem()
+        if Cell._AnimationSystemPatched then return end
+        Cell._AnimationSystemPatched = true
+
+        local f = CreateFrame("Frame")
+        local ag = f:CreateAnimationGroup()
+        local mt = getmetatable(ag)
+        local orig_CreateAnimation = mt.__index.CreateAnimation
+
+        mt.__index.CreateAnimation = function(self, type, name, inherits)
+            -- DetailsWotlkPort crashes if name is nil, so we must provide a default
+            if not name then name = type end
+            
+            local anim = orig_CreateAnimation(self, type, name, inherits)
+
+            if type == "Alpha" then
+                anim.SetFromAlpha = function(self, from)
+                    self._fromAlpha = from
+                    self:_UpdateAlpha()
+                end
+                anim.SetToAlpha = function(self, to)
+                    self._toAlpha = to
+                    self:_UpdateAlpha()
+                end
+                anim._UpdateAlpha = function(self)
+                    local from = self._fromAlpha or 1
+                    local to = self._toAlpha or 1
+                    if self.SetChange then
+                        self:SetChange(to - from)
+                    end
+                end
+                
+                anim:HookScript("OnPlay", function()
+                    if anim._fromAlpha then
+                        local region = anim:GetParent():GetParent()
+                        if region and region.SetAlpha then
+                            region:SetAlpha(anim._fromAlpha)
+                        end
+                    end
+                end)
+
+            elseif type == "Scale" then
+                anim.SetScaleFrom = function(self, x, y)
+                    self._fromX = x
+                    self._fromY = y
+                    self:_UpdateScale()
+                end
+                anim.SetScaleTo = function(self, x, y)
+                    self._toX = x
+                    self._toY = y
+                    self:_UpdateScale()
+                end
+                anim._UpdateScale = function(self)
+                    local fromX = self._fromX or 1
+                    local fromY = self._fromY or 1
+                    local toX = self._toX or 1
+                    local toY = self._toY or 1
+                    
+                    if fromX == 0 then fromX = 0.001 end
+                    if fromY == 0 then fromY = 0.001 end
+                    
+                    if self.SetScale then
+                        self:SetScale(toX / fromX, toY / fromY)
+                    end
+                end
+                
+                anim:HookScript("OnPlay", function()
+                    if anim._fromX or anim._fromY then
+                        local region = anim:GetParent():GetParent()
+                        if region and region.SetScale then
+                            local startScale = math.max(anim._fromX or 0, anim._fromY or 0)
+                            if startScale == 0 then startScale = 0.001 end
+                            region:SetScale(startScale)
+                        end
+                    end
+                end)
+            end
+            
+            return anim
+        end
+    end
+
+    -- Fix 5: LibCustomGlow acUpdate crash (attempt to perform arithmetic on field 'space' (a nil value))
+    local function PatchLibCustomGlow()
+        local lib = LibStub and LibStub("LibCustomGlow-1.0", true)
+        if not lib then return end
+        if Cell._LibCustomGlowPatched then return end
+        Cell._LibCustomGlowPatched = true
+
+        local function SafeAcUpdate(self, elapsed)
+            local width, height = self:GetSize()
+            if width ~= self.info.width or height ~= self.info.height or not self.info.space then
+                if width * height == 0 then return end -- Avoid division by zero
+                self.info.width = width
+                self.info.height = height
+                self.info.perimeter = 2 * (width + height)
+                self.info.bottomlim = height * 2 + width
+                self.info.rightlim = height + width
+                self.info.space = self.info.perimeter / self.info.N
+            end
+        
+            local texIndex = 0
+            for k = 1, 4 do
+                self.timer[k] = self.timer[k] + elapsed / (self.info.period * k)
+                if self.timer[k] > 1 or self.timer[k] < -1 then
+                    self.timer[k] = self.timer[k] % 1
+                end
+                for i = 1, self.info.N do
+                    texIndex = texIndex + 1
+                    if self.textures[texIndex] then
+                        local position = (self.info.space * i + self.info.perimeter * self.timer[k]) % self.info.perimeter
+                        if position > self.info.bottomlim then
+                            self.textures[texIndex]:SetPoint("CENTER", self, "BOTTOMRIGHT", -position + self.info.bottomlim, 0)
+                        elseif position > self.info.rightlim then
+                            self.textures[texIndex]:SetPoint("CENTER", self, "TOPRIGHT", 0, -position + self.info.rightlim)
+                        elseif position > self.info.height then
+                            self.textures[texIndex]:SetPoint("CENTER", self, "TOPLEFT", position - self.info.height, 0)
+                        else
+                            self.textures[texIndex]:SetPoint("CENTER", self, "BOTTOMLEFT", 0, position)
+                        end
+                    end
+                end
+            end
+        end
+
+        local orig_AutoCastGlow_Start = lib.AutoCastGlow_Start
+        lib.AutoCastGlow_Start = function(r, color, N, frequency, scale, xOffset, yOffset, key, frameLevel)
+            orig_AutoCastGlow_Start(r, color, N, frequency, scale, xOffset, yOffset, key, frameLevel)
+            
+            key = key or ""
+            local f = r["_AutoCastGlow" .. key]
+            if f then
+                f:SetScript("OnUpdate", SafeAcUpdate)
+            end
+        end
+        
+        -- Also update the startList entry
+        if lib.startList then
+            lib.startList["Autocast Shine"] = lib.AutoCastGlow_Start
+        end
+        
+        print("[Polyfills] LibCustomGlow patched successfully.")
+    end
+
+    -- Add to the event handler
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("ADDON_LOADED")
+    f:SetScript("OnEvent", function(self, event, addonName)
+        if addonName == "Cell_Wrath" then
+            print("[Polyfills] ADDON_LOADED: Cell_Wrath")
+            PatchCreateScrollFrame()
+            PatchBindingListButton()
+            PatchGetClickCastingSpellList()
+            PatchAnimationSystem()
+            PatchLibCustomGlow()
+            self:UnregisterEvent("ADDON_LOADED")
+        end
+    end)
 
 end
 
