@@ -120,7 +120,16 @@ if not PixelUtil then
 end
 
 
-
+if not CreateVector2D then
+    function CreateVector2D(x, y)
+        return {
+            x = x or 0,
+            y = y or 0,
+            GetXY = function(self) return self.x, self.y end,
+            SetXY = function(self, x, y) self.x = x; self.y = y end
+        }
+    end
+end
 
 
 -------------------------------------------------
@@ -1889,16 +1898,5 @@ do
             return orig_GetClickCastingSpellList(class)
         end
     end
-
-    -- Add to the event handler
-    local f = CreateFrame("Frame")
-    f:RegisterEvent("ADDON_LOADED")
-    f:SetScript("OnEvent", function(self, event, addonName)
-        if addonName == "Cell_Wrath" then
-            PatchCreateScrollFrame()
-            PatchBindingListButton()
-            PatchGetClickCastingSpellList()
-            self:UnregisterEvent("ADDON_LOADED")
-        end
-    end)
+    
 end
