@@ -53,10 +53,23 @@ dumb:HookScript("OnLeave", function()
 end)
 
 local function UpdateAnchor()
+    -- Layout not initialized yet? Turn off mouse + hide dummy and bail.
+    if not Cell.vars.currentLayoutTable
+       or not Cell.vars.currentLayoutTable["pet"] then
+        hoverFrame:EnableMouse(false)
+        dumb:Hide()
+        return
+    end
+
     local show
-    if Cell.vars.currentLayoutTable["pet"]["raidEnabled"]
-    or (Cell.vars.currentLayoutTable["pet"]["partyEnabled"] and Cell.vars.currentLayoutTable["pet"]["partyDetached"]) then
-        show = Cell.unitButtons.pet[1]:IsShown()
+    local layoutPet = Cell.vars.currentLayoutTable["pet"]
+
+    if layoutPet["raidEnabled"]
+       or (layoutPet["partyEnabled"] and layoutPet["partyDetached"]) then
+        local firstPetButton = Cell.unitButtons.pet[1]
+        if firstPetButton and firstPetButton:IsShown() then
+            show = true
+        end
     end
 
     hoverFrame:EnableMouse(show)
@@ -73,6 +86,7 @@ local function UpdateAnchor()
         dumb:Hide()
     end
 end
+
 
 -------------------------------------------------
 -- header
@@ -126,10 +140,10 @@ for i, b in ipairs(header) do
 end
 
 -- update mover
-header[1]:HookScript("OnShow", function()
+header:HookScript("OnShow", function()
     UpdateAnchor()
 end)
-header[1]:HookScript("OnHide", function()
+header:HookScript("OnHide", function()
     UpdateAnchor()
 end)
 

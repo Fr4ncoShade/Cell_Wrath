@@ -53,12 +53,10 @@ Cell.isTWW     = false -- definitely not TWW on 3.3.5a
 if not SmoothStatusBarMixin then
     SmoothStatusBarMixin = {}
 
-    -- Retail calls this from XML, we don't need animation logic here
     function SmoothStatusBarMixin:OnLoad()
         -- no-op on 3.3.5
     end
 
-    -- Retail "smooths" the change over time; we just set the value directly
     function SmoothStatusBarMixin:SetSmoothedValue(value)
         if self.SetValue then
             self:SetValue(value)
@@ -70,7 +68,63 @@ if not SmoothStatusBarMixin then
             self:SetMinMaxValues(minVal, maxVal)
         end
     end
+
+    -- Retail uses this to reset the smoothing state; on 3.3.5 we just snap to current value.
+    function SmoothStatusBarMixin:ResetSmoothedValue()
+        if self.GetValue and self.SetValue then
+            self:SetValue(self:GetValue())
+        end
+    end
 end
+
+-------------------------------------------------
+-- Retail unit API polyfills
+-------------------------------------------------
+
+if not UnitInOtherParty then
+    -- Retail API: returns true if unit is in a different party/instance group.
+    -- WotLK/Ascension doesn't have that concept, so just say "no".
+    function UnitInOtherParty(unit)
+        return false
+    end
+end
+
+
+-------------------------------------------------
+-- StatusBar smoothing helpers polyfill
+-------------------------------------------------
+do
+    local sb = CreateFrame("StatusBar")
+    local mt = getmetatable(sb)
+
+    if mt and mt.__index then
+        if not mt.__index.SetSmoothedValue then
+            function mt.__index:SetSmoothedValue(value)
+                if self.SetValue then
+                    self:SetValue(value)
+                end
+            end
+        end
+
+        if not mt.__index.SetMinMaxSmoothedValue then
+            function mt.__index:SetMinMaxSmoothedValue(minVal, maxVal)
+                if self.SetMinMaxValues then
+                    self:SetMinMaxValues(minVal, maxVal)
+                end
+            end
+        end
+
+        if not mt.__index.ResetSmoothedValue then
+            function mt.__index:ResetSmoothedValue()
+                if self.GetValue and self.SetValue then
+                    self:SetValue(self:GetValue())
+                end
+            end
+        end
+    end
+end
+
+
 
 -- Alpha animation SetFromAlpha / SetToAlpha polyfill for 3.3.5a
 do
@@ -175,6 +229,27 @@ do
 
             -- Worst case: no scripts anywhere, just fire once so stuff like blink:Play() runs at least once
             handler(self)
+        end
+    end
+end
+
+
+-------------------------------------------------
+-- SecureHandler_SetFrameRef polyfill
+-- Ignore invalid/nil reference frames instead of erroring.
+-------------------------------------------------
+do
+    if type(SecureHandler_SetFrameRef) == "function" and not _G._CellOrigSecureHandlerSetFrameRef then
+        _G._CellOrigSecureHandlerSetFrameRef = SecureHandler_SetFrameRef
+
+        function SecureHandler_SetFrameRef(self, refKey, refFrame)
+            -- If refFrame is missing or not a frame-like table, just skip.
+            if not refFrame or type(refFrame) ~= "table" or type(refFrame.GetName) ~= "function" then
+                -- silently ignore bad refs
+                return
+            end
+
+            return _G._CellOrigSecureHandlerSetFrameRef(self, refKey, refFrame)
         end
     end
 end
@@ -495,6 +570,43 @@ if not C_Item then
     end
 end
 
+-------------------------------------------------
+-- UnitBuff/UnitDebuff API polyfills for WotLK
+-- WotLK returns: name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable, shouldConsolidate, spellId (11 values)
+-- Retail returns: name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, ... (10+ values, no rank)
+-- We need to remove rank and reorder to match retail
+-------------------------------------------------
+if not _G._CellOriginalUnitBuff then
+    _G._CellOriginalUnitBuff = UnitBuff
+
+    function UnitBuff(unit, index, filter)
+        -- WotLK: name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable, shouldConsolidate, spellId
+        local name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable, shouldConsolidate, spellId = _G._CellOriginalUnitBuff(unit, index, filter)
+
+        if not name then
+            return nil
+        end
+
+        -- Retail format: name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, ...
+        -- Skip rank, add spellId at position 10
+        return name, icon, count, debuffType, duration, expirationTime, caster, isStealable, nil, spellId, nil, nil, nil, nil, nil, nil
+    end
+end
+
+if not _G._CellOriginalUnitDebuff then
+    _G._CellOriginalUnitDebuff = UnitDebuff
+
+    function UnitDebuff(unit, index, filter)
+        local name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable, shouldConsolidate, spellId = _G._CellOriginalUnitDebuff(unit, index, filter)
+
+        if not name then
+            return nil
+        end
+
+        return name, icon, count, debuffType, duration, expirationTime, caster, isStealable, nil, spellId, nil, nil, nil, nil, nil, nil
+    end
+end
+
 -- C_UnitAuras
 if not C_UnitAuras then
     C_UnitAuras = {}
@@ -542,7 +654,7 @@ if not C_UnitAuras then
         local slots = {}
         local index = 1
         local max = maxSlots or 40 -- Default max auras
-        
+
         while index <= max do
             local name = UnitAura(unit, index, filter)
             if name then
@@ -552,7 +664,7 @@ if not C_UnitAuras then
                 break
             end
         end
-        
+
         return slots
     end
 
@@ -668,6 +780,36 @@ if not C_NamePlate then
         return {}
     end
 end
+
+-------------------------------------------------
+-- SecureHandlerStateTemplate:SetFrameRef polyfill
+-- Ignore bad / nil reference frames instead of erroring.
+-------------------------------------------------
+do
+    local ok, test = pcall(CreateFrame, "Frame", nil, UIParent, "SecureHandlerStateTemplate")
+    if ok and test then
+        local mt = getmetatable(test)
+        if mt and mt.__index
+           and type(mt.__index.SetFrameRef) == "function"
+           and not mt.__index._CellSetFrameRefShim
+        then
+            local origSetFrameRef = mt.__index.SetFrameRef
+
+            function mt.__index:SetFrameRef(refKey, refFrame)
+                -- If the reference is missing or obviously not a frame, just ignore.
+                if not refFrame or type(refFrame) ~= "table" or type(refFrame.GetName) ~= "function" then
+                    return
+                end
+                return origSetFrameRef(self, refKey, refFrame)
+            end
+
+            mt.__index._CellSetFrameRefShim = true
+        end
+    end
+end
+
+
+
 
 -- Wrath: alias RegisterAttributeDriver/UnregisterAttributeDriver to StateDriver versions
 if not RegisterAttributeDriver and RegisterStateDriver then

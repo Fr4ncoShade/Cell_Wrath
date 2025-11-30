@@ -16,8 +16,11 @@ local anchors = {
 }
 
 for k, v in pairs(anchors) do
-    npcFrame:SetFrameRef(k, v)
+    if v then
+        npcFrame:SetFrameRef(k, v)
+    end
 end
+
 
 -------------------------------------------------
 -- separateAnchor
@@ -476,14 +479,22 @@ local function NPCFrame_UpdateLayout(layout, which)
     end
 
     if not which or which == "pet" then
+        local party      = CellPartyFrameHeaderUnitButton1
+        local petParty   = CellPartyFrameHeaderUnitButton1Pet
+
         if not layout["pet"]["partyEnabled"] or layout["pet"]["partyDetached"] then
-            npcFrame:SetFrameRef("party", CellPartyFrameHeaderUnitButton1)
-            anchors["party"] = CellPartyFrameHeaderUnitButton1
+            if party then
+                npcFrame:SetFrameRef("party", party)
+                anchors["party"] = party
+            end
         else
-            npcFrame:SetFrameRef("party", CellPartyFrameHeaderUnitButton1Pet)
-            anchors["party"] = CellPartyFrameHeaderUnitButton1Pet
+            if petParty then
+                npcFrame:SetFrameRef("party", petParty)
+                anchors["party"] = petParty
+            end
         end
     end
+
 
     if not which or strfind(which, "arrangement$") or which == "npc" or which == "pet" then
         local groupType = F.GetGroupType()
