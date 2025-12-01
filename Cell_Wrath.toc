@@ -19,6 +19,7 @@ Libs\LoadLibs_Classic.xml
 
 
 Core_Wrath.lua
+Debug.lua
 Utils.lua
 Revise.lua
 Comm\LoadComm.xml

@@ -399,27 +399,38 @@ end
 
 -- UnitGroupRolesAssigned
 if not UnitGroupRolesAssigned then
-    -- Retail API: returns the role assigned to a unit ("TANK", "HEALER", "DAMAGER", "NONE")
-    -- WotLK 3.3.5a has role detection through GetRaidRosterInfo and LFG system
+    -- WotLK 3.3.5a NATIVE API: returns THREE BOOLEANS (isTank, isHealer, isDamage)
+    -- This is DIFFERENT from Retail which returns a single string
+    -- WotLK has role detection through GetRaidRosterInfo and LFG system
+    
+    -- Debug flag for role detection (toggle with /cell debug role)
+    local roleDebugEnabled = false
+    
     function UnitGroupRolesAssigned(unit)
-        if not unit then return "NONE" end
+        if not unit then return false, false, false end
+        
+        local isTank, isHealer, isDamage = false, false, false
+        local roleSource = "none"
 
         -- For raid members, get role from GetRaidRosterInfo
         if UnitInRaid(unit) then
             for i = 1, GetNumRaidMembers() do
-                -- name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole
+                -- GetRaidRosterInfo returns: name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole
                 local name, _, _, _, _, _, _, _, _, role = GetRaidRosterInfo(i)
                 local raidUnit = "raid" .. i
 
                 if UnitIsUnit(unit, raidUnit) then
-                    -- role is returned from GetRaidRosterInfo (from LFG/Dungeon Finder system)
-                    -- Convert WotLK role format to retail format if needed
-                    if role == "MAINTANK" or role == "TANK" then
-                        return "TANK"
-                    elseif role == "MAINASSIST" or role == "HEALER" then
-                        return role == "HEALER" and "HEALER" or "DAMAGER"
-                    elseif role == "DAMAGER" or role == "DPS" then
-                        return "DAMAGER"
+                    -- role is returned from GetRaidRosterInfo (from LFG/Dungeon Finder system or raid assignments)
+                    if role and role ~= "NONE" and role ~= "" then
+                        roleSource = "GetRaidRosterInfo"
+                        -- Convert WotLK role format to booleans
+                        if role == "MAINTANK" or role == "TANK" then
+                            isTank = true
+                        elseif role == "HEALER" then
+                            isHealer = true
+                        elseif role == "MAINASSIST" or role == "DAMAGER" or role == "DPS" then
+                            isDamage = true
+                        end
                     end
                     break
                 end
@@ -427,16 +438,65 @@ if not UnitGroupRolesAssigned then
         end
 
         -- Fallback: Check party assignments (Main Tank/Main Assist)
-        if GetPartyAssignment("MAINTANK", unit) then
-            return "TANK"
+        if not isTank and not isHealer and not isDamage then
+            if GetPartyAssignment("MAINTANK", unit) then
+                isTank = true
+                roleSource = "MainTank assignment"
+            elseif GetPartyAssignment("MAINASSIST", unit) then
+                isDamage = true
+                roleSource = "MainAssist assignment"
+            end
+        end
+        
+        -- Fallback: Use spec-based detection via LibGroupInfo
+        if not isTank and not isHealer and not isDamage then
+            local LibGroupInfo = LibStub and LibStub:GetLibrary("LibGroupInfo", true)
+            if LibGroupInfo then
+                local guid = UnitGUID(unit)
+                if guid then
+                    local cachedInfo = LibGroupInfo:GetCachedInfo(guid)
+                    if cachedInfo then
+                        -- GetCachedInfo returns a table with assignedRole and specRole fields
+                        local specRole = cachedInfo.assignedRole or cachedInfo.specRole
+                        if specRole and specRole ~= "NONE" then
+                            roleSource = "LibGroupInfo (spec-based)"
+                            if specRole == "TANK" then
+                                isTank = true
+                            elseif specRole == "HEALER" then
+                                isHealer = true
+                            elseif specRole == "DAMAGER" or specRole == "MELEE" or specRole == "RANGED" then
+                                isDamage = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        
+        -- Final fallback: Default to DAMAGER if still no role detected
+        -- This helps on custom servers like Ascension where spec detection may not work
+        if not isTank and not isHealer and not isDamage then
+            isDamage = true
+            roleSource = "default fallback"
+        end
+        
+        -- Debug output
+        if roleDebugEnabled then
+            local roleName = isTank and "TANK" or isHealer and "HEALER" or "DAMAGER"
+            print(string.format("[Role Debug] %s -> %s (source: %s)", 
+                UnitName(unit) or unit, roleName, roleSource))
         end
 
-        if GetPartyAssignment("MAINASSIST", unit) then
-            return "DAMAGER"
+        return isTank, isHealer, isDamage
+    end
+    
+    -- Debug command toggle - create sFuncs table if needed
+    if _G.Cell then
+        _G.Cell.sFuncs = _G.Cell.sFuncs or {}
+        _G.Cell.sFuncs.ToggleRoleDebug = function()
+            roleDebugEnabled = not roleDebugEnabled
+            print(string.format("[Cell] Role debug: %s", roleDebugEnabled and "enabled" or "disabled"))
         end
-
-        -- No role assigned
-        return "NONE"
     end
 end
 

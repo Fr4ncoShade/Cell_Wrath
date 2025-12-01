@@ -19,6 +19,8 @@ local QUEUE_EVENT = "GroupInfo_QueueStatus"
 local PLAYER_GUID
 local RETRY_INTERVAL = 1.5
 local MAX_ATTEMPTS = 3
+
+-- WOW_PROJECT_ID is polyfilled in Polyfills.lua which loads before this library
 local IS_RETAIL = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 local IS_WRATH = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 local IS_MISTS = WOW_PROJECT_ID == WOW_PROJECT_MISTS_CLASSIC
@@ -147,7 +149,19 @@ local CanInspect = CanInspect
 local GetSpecialization = GetSpecialization or (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
 local GetSpecializationInfo = GetSpecializationInfo or (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo)
 local GetInspectSpecialization = GetInspectSpecialization
+
+-- Polyfill for UnitNameUnmodified (doesn't exist in WotLK 3.3.5a) 
+if not UnitNameUnmodified then
+    UnitNameUnmodified = UnitName
+end
 local UnitNameUnmodified = UnitNameUnmodified
+
+-- Polyfill for GetNormalizedRealmName (doesn't exist in WotLK 3.3.5a)
+if not GetNormalizedRealmName then
+    GetNormalizedRealmName = function()
+        return GetRealmName()
+    end
+end
 local GetNormalizedRealmName = GetNormalizedRealmName
 local UnitLevel = UnitLevel
 local UnitRace = UnitRace

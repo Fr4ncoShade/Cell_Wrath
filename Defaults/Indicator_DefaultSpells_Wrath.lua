@@ -30,7 +30,103 @@ end
 -- bigDebuffs
 -------------------------------------------------
 local bigDebuffs = {
-    46392, -- 专注打击
+    -- Original Cell
+    46392, -- Focused Assault
+    
+    -- CC Debuffs from ElvUI (Crowd Control)
+    -- Death Knight
+    47476, -- Strangulate
+    51209, -- Hungering Cold
+    
+    -- Druid
+    99, -- Demoralizing Roar
+    339, -- Entangling Roots
+    2637, -- Hibernate
+    5211, -- Bash
+    9005, -- Pounce
+    22570, -- Maim
+    33786, -- Cyclone
+    45334, -- Feral Charge Effect
+    
+    -- Hunter
+    1513, -- Scare Beast
+    3355, -- Freezing Trap Effect
+    19386, -- Wyvern Sting
+    19503, -- Scatter Shot
+    24394, -- Intimidation
+    34490, -- Silencing Shot
+    50245, -- Pin
+    50519, -- Sonic Blast
+    50541, -- Snatch
+    54706, -- Venom Web Spray
+    56626, -- Sting
+    60210, -- Freezing Arrow Effect
+    64803, -- Entrapment
+    
+    -- Mage
+    118, -- Polymorph (Sheep)
+    122, -- Frost Nova
+    18469, -- Silenced - Improved Counterspell (Rank 1)
+    31589, -- Slow
+    31661, -- Dragon's Breath
+    33395, -- Freeze
+    44572, -- Deep Freeze
+    55080, -- Shattered Barrier
+    61305, -- Polymorph (Black Cat)
+    55021, -- Silenced - Improved Counterspell (Rank 2)
+    
+    -- Paladin
+    853, -- Hammer of Justice
+    10326, -- Turn Evil
+    20066, -- Repentance
+    31935, -- Avenger's Shield
+    
+    -- Priest
+    605, -- Mind Control
+    8122, -- Psychic Scream
+    9484, -- Shackle Undead
+    15487, -- Silence
+    64044, -- Psychic Horror
+    
+    -- Rogue
+    408, -- Kidney Shot
+    1330, -- Garrote - Silence
+    1776, -- Gouge
+    1833, -- Cheap Shot
+    2094, -- Blind
+    6770, -- Sap
+    18425, -- Silenced - Improved Kick
+    51722, -- Dismantle
+    
+    -- Shaman
+    3600, -- Earthbind
+    8056, -- Frost Shock
+    39796, -- Stoneclaw Stun
+    51514, -- Hex
+    63685, -- Freeze
+    64695, -- Earthgrab
+    
+    -- Warlock
+    710, -- Banish
+    5782, -- Fear
+    6358, -- Seduction
+    6789, -- Death Coil
+    17928, -- Howl of Terror
+    24259, -- Spell Lock
+    30283, -- Shadowfury
+    
+    -- Warrior
+    676, -- Disarm
+    7922, -- Charge Stun
+    18498, -- Silenced - Gag Order
+    20511, -- Intimidating Shout
+    
+    -- Racial
+    25046, -- Arcane Torrent
+    20549, -- War Stomp
+    
+    -- The Lich King (Boss)
+    73787, -- Necrotic Plague
 }
 
 function I.GetDefaultBigDebuffs()

@@ -1609,12 +1609,22 @@ end
 
 CheckPowerEventRegistration = function(b)
     if b:IsVisible() and not b.isPreview and (b._shouldShowPowerText or b._shouldShowPowerBar) then
-        b:RegisterEvent("UNIT_POWER_FREQUENT")
+        b:RegisterEvent("UNIT_POWER")
+        b:RegisterEvent("UNIT_MANA")
+        b:RegisterEvent("UNIT_RAGE")
+        b:RegisterEvent("UNIT_FOCUS")
+        b:RegisterEvent("UNIT_ENERGY")
+        b:RegisterEvent("UNIT_RUNIC_POWER")
         b:RegisterEvent("UNIT_MAXPOWER")
         b:RegisterEvent("UNIT_DISPLAYPOWER")
         return true
     else
-        b:UnregisterEvent("UNIT_POWER_FREQUENT")
+        b:UnregisterEvent("UNIT_POWER")
+        b:UnregisterEvent("UNIT_MANA")
+        b:UnregisterEvent("UNIT_RAGE")
+        b:UnregisterEvent("UNIT_FOCUS")
+        b:UnregisterEvent("UNIT_ENERGY")
+        b:UnregisterEvent("UNIT_RUNIC_POWER")
         b:UnregisterEvent("UNIT_MAXPOWER")
         b:UnregisterEvent("UNIT_DISPLAYPOWER")
         return false
@@ -1696,7 +1706,10 @@ UnitButton_UpdateRole = function(self)
     local unit = self.states.unit
     if not unit then return end
 
-    local role = UnitGroupRolesAssigned(unit)
+    -- UnitGroupRolesAssigned returns 3 booleans in WotLK: isTank, isHealer, isDamage
+    local isTank, isHealer, isDamage = UnitGroupRolesAssigned(unit)
+    -- Convert to string format that roleIcon:SetRole expects
+    local role = isTank and "TANK" or isHealer and "HEALER" or isDamage and "DAMAGER" or "NONE"
     self.states.role = role
 
     local roleIcon = self.indicators.roleIcon
@@ -2545,7 +2558,12 @@ local function UnitButton_RegisterEvents(self)
     self:RegisterEvent("UNIT_HEALTH_FREQUENT")
     self:RegisterEvent("UNIT_MAXHEALTH")
 
-    self:RegisterEvent("UNIT_POWER_FREQUENT")
+    self:RegisterEvent("UNIT_POWER")
+    self:RegisterEvent("UNIT_MANA")
+    self:RegisterEvent("UNIT_RAGE")
+    self:RegisterEvent("UNIT_FOCUS")
+    self:RegisterEvent("UNIT_ENERGY")
+    self:RegisterEvent("UNIT_RUNIC_POWER")
     self:RegisterEvent("UNIT_MAXPOWER")
     self:RegisterEvent("UNIT_DISPLAYPOWER")
 
@@ -2652,7 +2670,7 @@ local function UnitButton_OnEvent(self, event, unit)
             UnitButton_UpdatePower(self)
             UnitButton_UpdatePowerText(self)
 
-        elseif event == "UNIT_POWER_FREQUENT" then
+        elseif event == "UNIT_POWER" or event == "UNIT_MANA" or event == "UNIT_RAGE" or event == "UNIT_FOCUS" or event == "UNIT_ENERGY" or event == "UNIT_RUNIC_POWER" then
             UnitButton_UpdatePowerStates(self)
             UnitButton_UpdatePower(self)
             UnitButton_UpdatePowerText(self)

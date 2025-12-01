@@ -9,30 +9,39 @@ local _, Cell = ...
 local F = Cell.funcs
 
 local debuffs = {
-    [745] = { -- 卡拉赞
+    [745] = { -- Karazhan
         ["general"] = {
         },
-        [1552] = { -- 仆役宿舍
+        [1552] = { -- Servant's Quarters
         },
-        [1553] = { -- 猎手阿图门
+        [1553] = { -- Attumen the Huntsman
+            29833, -- Intangible Presence
         },
-        [1554] = { -- 莫罗斯
+        [1554] = { -- Moroes
+            37066, -- Garrote
         },
-        [1555] = { -- 贞节圣女
+        [1555] = { -- Maiden of Virtue
+            29511, -- Repentance
         },
-        [1556] = { -- 歌剧院
+        [1556] = { -- Opera Event
+            30753, -- Big Bad Wolf
         },
-        [1557] = { -- 馆长
+        [1557] = { -- The Curator
+            30254, -- Evocation
         },
-        [1559] = { -- 埃兰之影
+        [1559] = { -- Shade of Aran
+            29946, -- Flame Wreath
         },
-        [1560] = { -- 特雷斯坦·邪蹄
+        [1560] = { -- Terestian Illhoof
+            30053, -- Sacrifice
         },
-        [1561] = { -- 虚空幽龙
+        [1561] = { -- Netherspite
+            38523, -- Nether Exhaust
         },
-        [1764] = { -- 国际象棋
+        [1764] = { -- Chess Event
         },
-        [1563] = { -- 玛克扎尔王子
+        [1563] = { -- Prince Malchezaar
+            30843, -- Enfeeble
         },
     },
 
@@ -52,20 +61,25 @@ local debuffs = {
         },
     },
 
-    [748] = { -- 毒蛇神殿
+    [748] = { -- Serpentshrine Cavern
         ["general"] = {
         },
-        [1567] = { -- 不稳定的海度斯
+        [1567] = { -- Hydross
+            38246, -- Mark of Hydross
         },
-        [1568] = { -- 鱼斯拉
+        [1568] = { -- Lurker Below
+            37850, -- Watery Grave
         },
-        [1569] = { -- 盲眼者莱欧瑟拉斯
+        [1569] = { -- Leotheras
+            37640, -- Whirlwind
         },
-        [1570] = { -- 深水领主卡拉瑟雷斯
+        [1570] = { -- Karathress
         },
-        [1571] = { -- 莫洛格里·踏潮者
+        [1571] = { -- Morogrim
+            37850, -- Watery Grave
         },
-        [1572] = { -- 瓦丝琪
+        [1572] = { -- Lady Vashj
+            38280, -- Static Charge
         },
     },
 
@@ -97,43 +111,56 @@ local debuffs = {
         },
     },
 
-    [751] = { -- 黑暗神殿
+    [751] = { -- Black Temple
         ["general"] = {
         },
-        [1582] = { -- 高阶督军纳因图斯
+        [1582] = { -- High Warlord Naj'entus
+            39837, -- Impaling Spine
         },
-        [1583] = { -- 苏普雷姆斯
+        [1583] = { -- Supremus
+            40253, -- Molten Flame
         },
-        [1584] = { -- 阿卡玛之影
+        [1584] = { -- Shade of Akama
         },
-        [1585] = { -- 塔隆·血魔
+        [1585] = { -- Teron Gorefiend
+            40251, -- Shadow of Death
         },
-        [1586] = { -- 古尔图格·血沸
+        [1586] = { -- Gurtogg Bloodboil
+            40481, -- Acidic Wound
+            42005, -- Bloodboil
         },
-        [1587] = { -- 灵魂之匣
+        [1587] = { -- Reliquary of Souls
         },
-        [1588] = { -- 莎赫拉丝主母
+        [1588] = { -- Mother Shahraz
+            40823, -- Saber Lash
         },
-        [1589] = { -- 伊利达雷议会
+        [1589] = { -- Illidari Council
         },
-        [1590] = { -- 伊利丹·怒风
+        [1590] = { -- Illidan Stormrage
+            41917, -- Parasitic Shadowfiend
         },
     },
 
-    [752] = { -- 太阳之井高地
+    [752] = { -- Sunwell Plateau
         ["general"] = {
         },
-        [1591] = { -- 卡雷苟斯
+        [1591] = { -- Kalecgos
+            45032, -- Curse of Boundless Agony
         },
-        [1592] = { -- 布鲁塔卢斯
+        [1592] = { -- Brutallus
+            45150, -- Meteor Slash
+            46394, -- Burn
         },
-        [1593] = { -- 菲米丝
+        [1593] = { -- Felmyst
+            45855, -- Gas Nova
         },
-        [1594] = { -- 艾瑞达双子
+        [1594] = { -- Eredar Twins
+            45256, -- Conflagration
         },
-        [1595] = { -- 穆鲁
+        [1595] = { -- M'uru
         },
-        [1596] = { -- 基尔加丹
+        [1596] = { -- Kil'jaeden
+            45737, -- Flame Dart
         },
     },
 

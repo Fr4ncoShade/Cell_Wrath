@@ -992,7 +992,23 @@ function SlashCmdList.CELL(msg, editbox)
     command = strlower(command or "")
     rest = strlower(rest or "")
 
-    if command == "options" or command == "opt" then
+    if command == "debug" then
+        -- Delegate to the debug module if it's loaded
+        if Cell.Debug and Cell.Debug.HandleCommand then
+            Cell.Debug:HandleCommand(rest)
+        else
+            F.Print("Debug module not loaded.")
+        end
+
+    elseif command == "roledebug" or command == "roledbg" then
+        -- Toggle role detection debugging
+        if Cell.sFuncs and Cell.sFuncs.ToggleRoleDebug then
+            Cell.sFuncs.ToggleRoleDebug()
+        else
+            F.Print("Role debug function not available.")
+        end
+
+    elseif command == "options" or command == "opt" then
         F.ShowOptionsFrame()
 
     elseif command == "healers" then
@@ -1074,6 +1090,7 @@ function SlashCmdList.CELL(msg, editbox)
 
     else
         F.Print(L["Available slash commands"]..":\n"..
+            "|cFFFFB5C5/cell debug|r: toggle debug mode or use subcommands (v, r, c, h).\n"..
             "|cFFFFB5C5/cell options|r, |cFFFFB5C5/cell opt|r: "..L["show Cell options frame"]..".\n"..
             "|cFFFFB5C5/cell healers|r: "..L["create a \"Healers\" indicator"]..".\n"..
             "|cFFFFB5C5/cell rescale|r: "..strlower(L["Apply Recommended Scale"])..".\n"..
