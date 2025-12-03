@@ -727,6 +727,7 @@ function I.CreateDispels(parent)
     local dispels = CreateFrame("Frame", parent:GetName().."DispelParent", parent.widgets.indicatorFrame)
     parent.indicators.dispels = dispels
     dispels.parent = parent
+    dispels:SetAllPoints(parent.widgets.healthBar)
     dispels:Hide()
 
     dispels:SetScript("OnHide", function()
