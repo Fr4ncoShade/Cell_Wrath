@@ -324,9 +324,9 @@ Cell.defaults.layout = {
             ["indicatorName"] = "powerWordShield",
             ["type"] = "built-in",
             ["enabled"] = false,
-            ["position"] = {"CENTER", "button", "BOTTOMRIGHT", -7, 7},
+            ["position"] = {"CENTER", "healthBar", "RIGHT", 0, 0},
             ["frameLevel"] = 20,
-            ["size"] = {20, 20},
+            ["size"] = {4, 0},
             ["shieldByMe"] = true,
             ["shape"] = "circle",
         }, --17

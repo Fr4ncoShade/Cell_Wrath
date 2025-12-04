@@ -21,10 +21,8 @@ local UnitGUID = UnitGUID
 local UnitName = UnitName
 local GetUnitName = GetUnitName
 local UnitClassBase = UnitClassBase
-if Cell.isWrath then
-    UnitClassBase = function(unit)
-        return select(2, UnitClass(unit))
-    end
+UnitClassBase = function(unit)
+    return select(2, UnitClass(unit))
 end
 local UnitHealth = UnitHealth
 local UnitHealthMax = UnitHealthMax
@@ -64,11 +62,29 @@ local UnitDebuff = UnitDebuff
 local IsInRaid = IsInRaid
 local UnitDetailedThreatSituation = UnitDetailedThreatSituation
 local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
+local GetSpellInfo = GetSpellInfo
+
 
 local barAnimationType, highlightEnabled, predictionEnabled
+local absorbEnabled, absorbInvertColor
 local shieldEnabled, overshieldEnabled, overshieldReverseFillEnabled
 
-local POWER_WORD_SHIELD
+local POWER_WORD_SHIELD_NAME = GetSpellInfo(17) or "Power Word: Shield"
+
+local function IsPowerWordShield(spellId, spellName)
+    if spellName and spellName == POWER_WORD_SHIELD_NAME then
+        return true
+    end
+
+    if spellId then
+        local fetched = GetSpellInfo(spellId)
+        if fetched and fetched == POWER_WORD_SHIELD_NAME then
+            return true
+        end
+    end
+
+    return false
+end
 
 -------------------------------------------------
 -- unit button func declarations
@@ -77,7 +93,7 @@ local UnitButton_UpdateAll
 local UnitButton_UpdateAuras, UnitButton_UpdateRole, UnitButton_UpdateLeader, UnitButton_UpdateStatusText
 local UnitButton_UpdateHealthColor, UnitButton_UpdateNameTextColor, UnitButton_UpdateHealthTextColor
 local UnitButton_UpdatePowerMax, UnitButton_UpdatePower, UnitButton_UpdatePowerType, UnitButton_UpdatePowerText, UnitButton_UpdatePowerTextColor
-local UnitButton_UpdateShieldAbsorbs
+local UnitButton_UpdateShieldAbsorbs, UnitButton_UpdateHealAbsorbs
 local CheckPowerEventRegistration, ShouldShowPowerText, ShouldShowPowerBar
 
 -------------------------------------------------
@@ -222,12 +238,13 @@ local function HandleIndicators(b)
             indicator:SetFrameLevel(indicator:GetParent():GetFrameLevel()+t["frameLevel"])
         end
         -- update size
-        if t["size"] then
+        local size = t["size-width"] or t["size"]
+        if size then
             -- NOTE: debuffs: ["size"] = {{normalSize}, {bigSize}}
             if t["indicatorName"] == "debuffs" or t["indicatorName"] == "powerWordShield" then
-                indicator:SetSize(t["size"][1], t["size"][2])
+                indicator:SetSize(size[1], size[2])
             else
-                P.Size(indicator, t["size"][1], t["size"][2])
+                P.Size(indicator, size[1], size[2])
             end
         end
         -- update thickness
@@ -667,6 +684,16 @@ local function UpdateIndicators(layout, indicatorName, setting, value, value2)
                     UnitButton_UpdateAuras(b)
                 else
                     P.Size(indicator, value[1], value[2])
+                end
+            end, true)
+        elseif setting == "size-width" then
+            F.IterateAllUnitButtons(function(b)
+                local indicator = b.indicators[indicatorName]
+                local height = (indicator.configs and indicator.configs["size"] and indicator.configs["size"][2]) or value[2] or indicator:GetHeight() or 0
+                if indicator.SetSize then
+                    indicator:SetSize(value[1], height)
+                else
+                    P.Size(indicator, value[1], height)
                 end
             end, true)
         elseif setting == "size-border" then
@@ -1355,7 +1382,7 @@ local function UnitButton_UpdateBuffs(self)
                 self.states.BGFlag = "horde"
             end
 
-            if enabledIndicators["powerWordShield"] and POWER_WORD_SHIELD[spellId] and (not indicatorBooleans["powerWordShield"] or source == "player") then
+            if enabledIndicators["powerWordShield"] and IsPowerWordShield(spellId, name) and (not indicatorBooleans["powerWordShield"] or source == "player") then
                 pwsFound = true
                 self.indicators.powerWordShield:SetShieldCooldown(expirationTime - duration, duration)
             end
@@ -1471,8 +1498,11 @@ local function UnitButton_UpdateHealthStates(self, diff)
     self.states.healthMax = healthMax
     if guid then
         self.states.totalAbsorbs = (pwsInfo[guid] or 0) + (daInfo[guid] or 0) + (pakInfo[guid] or 0)
+        -- Wrath doesn’t expose heal-absorb API; reuse total absorbs for the absorb bar.
+        self.states.healAbsorbs = self.states.totalAbsorbs
     else
         self.states.totalAbsorbs = 0
+        self.states.healAbsorbs = 0
     end
 
     if healthMax == 0 then
@@ -2205,6 +2235,12 @@ UnitButton_UpdateHealthColor = function(self)
     else
         self.widgets.incomingHeal:SetVertexColor(barR, barG, barB, 0.4)
     end
+
+    if absorbInvertColor and self.widgets.absorbsBar then
+        local r, g, b, a = self.widgets.healthBar:GetStatusBarColor()
+        self.widgets.absorbsBar:SetVertexColor(F.InvertColor(r, g, b, a))
+        self.widgets.overAbsorbGlow:SetVertexColor(F.InvertColor(r, g, b, a))
+    end
 end
 
 -------------------------------------------------
@@ -2264,12 +2300,39 @@ UnitButton_UpdateShieldAbsorbs = function(self)
         end
 
         self.widgets.shieldBar:SetValue(shieldPercent, self.states.healthPercent)
+        UnitButton_UpdateHealAbsorbs(self, true)
     else
         self.indicators.shieldBar:Hide()
         self.widgets.shieldBar:Hide()
         self.widgets.overShieldGlow:Hide()
         self.widgets.shieldBarR:Hide()
         self.widgets.overShieldGlowR:Hide()
+        UnitButton_UpdateHealAbsorbs(self, true)
+    end
+end
+
+UnitButton_UpdateHealAbsorbs = function(self, skipStateUpdates)
+    if not absorbEnabled then
+        if self.widgets.absorbsBar then
+            self.widgets.absorbsBar:Hide()
+            self.widgets.overAbsorbGlow:Hide()
+        end
+        return
+    end
+
+    local unit = self.states.displayedUnit
+    if not unit then return end
+
+    if not skipStateUpdates then
+        UnitButton_UpdateHealthStates(self)
+    end
+
+    if self.states.healAbsorbs > 0 then
+        local absorbsPercent = self.states.healAbsorbs / self.states.healthMax
+        self.widgets.absorbsBar:SetValue(absorbsPercent, self.states.healthPercent)
+    else
+        self.widgets.absorbsBar:Hide()
+        self.widgets.overAbsorbGlow:Hide()
     end
 end
 
@@ -2288,47 +2351,47 @@ local function UpdateShield(guid, max, resetMax)
     F.HandleUnitButton("guid", guid, _UpdateShield, pwsInfo[guid] or 0, max, resetMax)
 end
 
-POWER_WORD_SHIELD = {
-    [17] = true, -- rank 1
-	[592] = true, -- rank 2
-	[600] = true, -- rank 3
-	[3747] = true, -- rank 4
-	[6065] = true, -- rank 5
-	[6066] = true, -- rank 6
-	[10898] = true, -- rank 7
-	[10899] = true, -- rank 8
-	[10900] = true, -- rank 9
-	[10901] = true, -- rank 10
-	[25217] = true, -- rank 11
-	[25218] = true, -- rank 12
-	[48065] = true, -- rank 13
-	[48066] = true, -- rank 14
-}
-
 local cleu = CreateFrame("Frame")
 cleu:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
 local UnitLevel = UnitLevel
 -- local totalAbsorbed = 0
 local lastHealAmount, lastHealGUID
+local lastGlyphHeal = {}
 local blessing
 local lastHealTimeStamp = {}
 
-cleu:SetScript("OnEvent", function()
-    local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22 = CombatLogGetCurrentEventInfo()
+local GetCLEU = function(...)
+    -- Wrath client may not support CombatLogGetCurrentEventInfo; fall back to event args.
+    if CombatLogGetCurrentEventInfo then
+        local a = {CombatLogGetCurrentEventInfo()}
+        if a[2] ~= nil then
+            return unpack(a)
+        end
+    end
+
+    -- Ascension CLEU (observed): ts, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, spellId, spellName, spellSchool, amount, overkill, school/resisted, blocked, absorbed, critical, glancing, crushing, offHand
+    return ...
+end
+
+cleu:SetScript("OnEvent", function(_, _, ...)
+    -- Ascension args: ts, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, spellId, spellName, spellSchool, amount, overheal/overkill, school/resisted, blocked, absorbed, critical, glancing, crushing, offHand
+    local timestamp, subEvent, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20 = GetCLEU(...)
+    local spellId, spellName, spellSchool = arg9, arg10, arg11
 
     -- thanks to momo2366 https://github.com/enderneko/Cell/issues/43
     if subEvent == "SPELL_HEAL" then
         -- spellId, spellName, spellSchool, amount, overhealing, absorbed, critical
-        if arg12 == 56160 then -- Glyph of Power Word: Shield
+        if spellId == 56160 then -- Glyph of Power Word: Shield
             --! IMPORTANT, when override PWS from others, SPELL_AURA_REMOVED comes after SPELL_HEAL
             lastHealTimeStamp[destGUID] = timestamp
 
-            if arg18 then
-                pwsInfo[destGUID] = arg15 / 1.5 / 0.2
+            if arg17 then
+                pwsInfo[destGUID] = arg12 / 1.5 / 0.2
             else
-                pwsInfo[destGUID] = arg15 / 0.2
+                pwsInfo[destGUID] = arg12 / 0.2
             end
+            lastGlyphHeal[destGUID] = arg12
 
             -- totalAbsorbed = 0
             -- print(timestamp, arg18, "healed:", arg15, "shield:", pwsInfo[destGUID])
@@ -2397,33 +2460,53 @@ cleu:SetScript("OnEvent", function()
         else -- swing
             absorbSpellId, absorbAmount = arg16, arg19
         end
-
         -- totalAbsorbed = totalAbsorbed + absorbAmount
         -- print("ABSORBED", "current:", absorbAmount, "total:", totalAbsorbed)
 
         -- update shields left
-        if POWER_WORD_SHIELD[absorbSpellId] then
-            pwsInfo[destGUID] = (pwsInfo[destGUID] or 0) - absorbAmount
-        elseif absorbSpellId == 47753 then
-            daInfo[destGUID] = (daInfo[destGUID] or 0) - absorbAmount
+        if IsPowerWordShield(absorbSpellId) then
+            pwsInfo[destGUID] = max((pwsInfo[destGUID] or 0) - absorbAmount, 0)
+        elseif absorbSpellId == 47753 or absorbSpellId == 1147753 then
+            daInfo[destGUID] = max((daInfo[destGUID] or 0) - absorbAmount, 0)
         elseif absorbSpellId == 64413 then
-            pakInfo[destGUID] = (pakInfo[destGUID] or 0) - absorbAmount
+            pakInfo[destGUID] = max((pakInfo[destGUID] or 0) - absorbAmount, 0)
         end
         UpdateShield(destGUID)
 
+    elseif subEvent == "SPELL_MISSED" then
+        -- Ascension uses ABSORB missType with amount: spellId, spellName, spellSchool, missType, amount
+        local missType, missAmount = arg12, arg13
+        if missType == "ABSORB" and missAmount and F.IsFriend(destFlags) then
+            if pwsInfo[destGUID] then
+                pwsInfo[destGUID] = max(pwsInfo[destGUID] - missAmount, 0)
+            elseif daInfo[destGUID] then
+                daInfo[destGUID] = max(daInfo[destGUID] - missAmount, 0)
+            end
+            UpdateShield(destGUID)
+        end
+
     elseif subEvent == "SPELL_AURA_REMOVED" then
-        if POWER_WORD_SHIELD[arg12] then
+        if IsPowerWordShield(spellId, spellName) then
             if timestamp ~= lastHealTimeStamp[destGUID] then
                 -- print("PWS removed", timestamp)
                 pwsInfo[destGUID] = nil
+                lastGlyphHeal[destGUID] = nil
             end
             UpdateShield(destGUID)
+            -- drop absorb bar immediately when PW:S fades
+            F.HandleUnitButton("guid", destGUID, function(b)
+                b.states.healAbsorbs = 0
+                if b.widgets.absorbsBar then
+                    b.widgets.absorbsBar:Hide()
+                    b.widgets.overAbsorbGlow:Hide()
+                end
+            end)
         elseif sourceGUID == Cell.vars.playerGUID then
-            if arg12 == 47753 then -- Divine Aegis NOTE: mine only
+            if spellId == 47753 or spellId == 1147753 then -- Divine Aegis NOTE: mine only
                 daInfo[destGUID] = nil
-            elseif arg12 == 64413 then
+            elseif spellId == 64413 then
                 pakInfo[destGUID] = nil
-            elseif arg12 == 64411 then
+            elseif spellId == 64411 then
                 --! BLESSING END
                 blessing = false
             end
@@ -2431,8 +2514,15 @@ cleu:SetScript("OnEvent", function()
         end
 
     elseif subEvent == "SPELL_AURA_APPLIED" then
+        if IsPowerWordShield(spellId, spellName) then
+            if lastGlyphHeal[destGUID] then
+                local computed = (lastGlyphHeal[destGUID] or 0) / 0.2
+                pwsInfo[destGUID] = computed
+                UpdateShield(destGUID)
+            end
+        end
         -- NOTE: 10% chance whenever a hot or direct spell heals, with a 45 sec internal cooldown
-        if arg12 == 64411 and sourceGUID == Cell.vars.playerGUID then
+        if spellId == 64411 and sourceGUID == Cell.vars.playerGUID then
             --! BLESSING START
             blessing = true
             if lastHealAmount then
@@ -2512,6 +2602,7 @@ UnitButton_UpdateAll = function(self)
     UnitButton_UpdatePlayerRaidIcon(self)
     UnitButton_UpdateTargetRaidIcon(self)
     UnitButton_UpdateShieldAbsorbs(self)
+    UnitButton_UpdateHealAbsorbs(self, true)
     UnitButton_UpdateInRange(self)
     UnitButton_UpdateRole(self)
     UnitButton_UpdateLeader(self)
@@ -2653,11 +2744,13 @@ local function UnitButton_OnEvent(self, event, unit)
             UnitButton_UpdateHealth(self)
             UnitButton_UpdateHealPrediction(self)
             UnitButton_UpdateShieldAbsorbs(self)
+            UnitButton_UpdateHealAbsorbs(self, true)
 
         elseif event == "UNIT_HEALTH" or event == "UNIT_HEALTH_FREQUENT" then
             UnitButton_UpdateHealth(self)
             UnitButton_UpdateHealPrediction(self)
             UnitButton_UpdateShieldAbsorbs(self)
+            UnitButton_UpdateHealAbsorbs(self, true)
             -- UnitButton_UpdateStatusText(self)
 
         elseif event == "UNIT_HEAL_PREDICTION" then
@@ -2967,7 +3060,11 @@ end
 
 function B.UpdateShields(button)
     predictionEnabled = CellDB["appearance"]["healPrediction"][1]
+    if CellDB["appearance"]["healAbsorb"][1] == nil then
+        CellDB["appearance"]["healAbsorb"][1] = true
+    end
     absorbEnabled = CellDB["appearance"]["healAbsorb"][1]
+    absorbInvertColor = CellDB["appearance"]["healAbsorbInvertColor"]
     shieldEnabled = CellDB["appearance"]["shield"][1]
     overshieldEnabled = CellDB["appearance"]["overshield"][1]
     overshieldReverseFillEnabled = shieldEnabled and CellDB["appearance"]["overshieldReverseFill"]
@@ -2976,9 +3073,19 @@ function B.UpdateShields(button)
     button.widgets.shieldBarR:SetVertexColor(unpack(CellDB["appearance"]["shield"][2]))
     button.widgets.overShieldGlow:SetVertexColor(unpack(CellDB["appearance"]["overshield"][2]))
     button.widgets.overShieldGlowR:SetVertexColor(unpack(CellDB["appearance"]["overshield"][2]))
+    if button.widgets.absorbsBar then
+        if absorbInvertColor then
+            button.widgets.absorbsBar:SetVertexColor(F.InvertColor(button.widgets.healthBar:GetStatusBarColor()))
+            button.widgets.overAbsorbGlow:SetVertexColor(F.InvertColor(button.widgets.healthBar:GetStatusBarColor()))
+        else
+            button.widgets.absorbsBar:SetVertexColor(unpack(CellDB["appearance"]["healAbsorb"][2]))
+            button.widgets.overAbsorbGlow:SetVertexColor(unpack(CellDB["appearance"]["healAbsorb"][2]))
+        end
+    end
 
     UnitButton_UpdateHealPrediction(button)
     UnitButton_UpdateShieldAbsorbs(button)
+    UnitButton_UpdateHealAbsorbs(button, true)
 end
 
 function B.SetTexture(button, tex)
@@ -3069,6 +3176,25 @@ local function ShieldBar_SetValue_Horizontal(self, shieldPercent, healthPercent)
     end
 end
 
+local function AbsorbsBar_SetValue_Horizontal(self, absorbsPercent, healthPercent)
+    local barWidth = self.healthBar:GetWidth()
+
+    if absorbInvertColor then
+        self:SetVertexColor(F.InvertColor(self.healthBar:GetStatusBarColor()))
+        self.overAbsorbGlow:SetVertexColor(F.InvertColor(self.healthBar:GetStatusBarColor()))
+    end
+
+    if absorbsPercent > healthPercent then
+        self:SetWidth(absorbsPercent * barWidth)
+        self:Show()
+        self.overAbsorbGlow:Show()
+    else
+        self:SetWidth(absorbsPercent * barWidth)
+        self:Show()
+        self.overAbsorbGlow:Hide()
+    end
+end
+
 local function DamageFlashTex_SetValue_Horizontal(self, lostPercent)
     local barWidth = self:GetParent():GetWidth()
     self:SetWidth(barWidth * lostPercent)
@@ -3139,6 +3265,25 @@ local function ShieldBar_SetValue_Vertical(self, shieldPercent, healthPercent)
     end
 end
 
+local function AbsorbsBar_SetValue_Vertical(self, absorbsPercent, healthPercent)
+    local barHeight = self.healthBar:GetHeight()
+
+    if absorbInvertColor then
+        self:SetVertexColor(F.InvertColor(self.healthBar:GetStatusBarColor()))
+        self.overAbsorbGlow:SetVertexColor(F.InvertColor(self.healthBar:GetStatusBarColor()))
+    end
+
+    if absorbsPercent > healthPercent then
+        self:SetHeight(absorbsPercent * barHeight)
+        self:Show()
+        self.overAbsorbGlow:Show()
+    else
+        self:SetHeight(absorbsPercent * barHeight)
+        self:Show()
+        self.overAbsorbGlow:Hide()
+    end
+end
+
 local function DamageFlashTex_SetValue_Vertical(self, lostPercent)
     local barHeight = self:GetParent():GetHeight()
     self:SetHeight(barHeight * lostPercent)
@@ -3156,6 +3301,8 @@ function B.SetOrientation(button, orientation, rotateTexture)
     local shieldBarR = button.widgets.shieldBarR
     local overShieldGlow = button.widgets.overShieldGlow
     local overShieldGlowR = button.widgets.overShieldGlowR
+    local absorbsBar = button.widgets.absorbsBar
+    local overAbsorbGlow = button.widgets.overAbsorbGlow
 
     gapTexture:SetColorTexture(unpack(CELL_BORDER_COLOR))
 
@@ -3232,6 +3379,19 @@ function B.SetOrientation(button, orientation, rotateTexture)
         P.Width(overShieldGlowR, 8)
         F.RotateTexture(overShieldGlowR, 0)
 
+        -- update absorbsBar
+        absorbsBar.SetValue = AbsorbsBar_SetValue_Horizontal
+        P.ClearPoints(absorbsBar)
+        P.Point(absorbsBar, "TOPLEFT", healthBar:GetStatusBarTexture(), "TOPRIGHT")
+        P.Point(absorbsBar, "BOTTOMLEFT", healthBar:GetStatusBarTexture(), "BOTTOMRIGHT")
+
+        -- update overAbsorbGlow
+        P.ClearPoints(overAbsorbGlow)
+        P.Point(overAbsorbGlow, "TOPLEFT", healthBar:GetStatusBarTexture(), "TOPRIGHT")
+        P.Point(overAbsorbGlow, "BOTTOMLEFT", healthBar:GetStatusBarTexture(), "BOTTOMRIGHT")
+        P.Width(overAbsorbGlow, 8)
+        F.RotateTexture(overAbsorbGlow, 0)
+
         -- update damageFlashTex
         damageFlashTex.SetValue = DamageFlashTex_SetValue_Horizontal
         P.ClearPoints(damageFlashTex)
@@ -3297,6 +3457,19 @@ function B.SetOrientation(button, orientation, rotateTexture)
         P.Point(overShieldGlowR, "RIGHT", shieldBarR, "BOTTOMRIGHT", 0, 0)
         P.Height(overShieldGlowR, 8)
         F.RotateTexture(overShieldGlowR, 90)
+
+        -- update absorbsBar
+        absorbsBar.SetValue = AbsorbsBar_SetValue_Vertical
+        P.ClearPoints(absorbsBar)
+        P.Point(absorbsBar, "BOTTOMLEFT", healthBar:GetStatusBarTexture(), "TOPLEFT")
+        P.Point(absorbsBar, "BOTTOMRIGHT", healthBar:GetStatusBarTexture(), "TOPRIGHT")
+
+        -- update overAbsorbGlow
+        P.ClearPoints(overAbsorbGlow)
+        P.Point(overAbsorbGlow, "BOTTOMLEFT", healthBar:GetStatusBarTexture(), "TOPLEFT")
+        P.Point(overAbsorbGlow, "BOTTOMRIGHT", healthBar:GetStatusBarTexture(), "TOPRIGHT")
+        P.Height(overAbsorbGlow, 8)
+        F.RotateTexture(overAbsorbGlow, 90)
 
         -- update damageFlashTex
         damageFlashTex.SetValue = DamageFlashTex_SetValue_Vertical
@@ -3476,6 +3649,11 @@ function B.UpdatePixelPerfect(button, updateIndicators)
 
     P.Repoint(button.widgets.incomingHeal)
     P.Repoint(button.widgets.shieldBar)
+    if button.widgets.absorbsBar then
+        P.Repoint(button.widgets.absorbsBar)
+        P.Repoint(button.widgets.overAbsorbGlow)
+        P.Resize(button.widgets.overAbsorbGlow)
+    end
     P.Repoint(button.widgets.damageFlashTex)
 
     P.Resize(button.widgets.overShieldGlow)
@@ -3661,6 +3839,26 @@ function CellUnitButton_OnLoad(button)
     -- overShieldGlowR:SetBlendMode("ADD")
     overShieldGlowR:Hide()
     shieldBar.overShieldGlowR = overShieldGlowR
+
+    -- over-absorb glow
+    local overAbsorbGlow = midLevelFrame:CreateTexture(name.."OverAbsorbGlow", "ARTWORK", nil, -2)
+    button.widgets.overAbsorbGlow = overAbsorbGlow
+    overAbsorbGlow:SetTexture("Interface\\AddOns\\Cell_Wrath\\Media\\overabsorb")
+    -- overAbsorbGlow:SetBlendMode("ADD")
+    overAbsorbGlow:Hide()
+
+    -- absorbs bar
+    local absorbsBar = midLevelFrame:CreateTexture(name.."AbsorbsBar", "ARTWORK", nil, 1)
+    button.widgets.absorbsBar = absorbsBar
+    absorbsBar.healthBar = healthBar
+    absorbsBar:SetTexture("Interface\\AddOns\\Cell_Wrath\\Media\\shield.tga", "REPEAT", "REPEAT")
+    absorbsBar:SetHorizTile(true)
+    absorbsBar:SetVertTile(true)
+    absorbsBar:SetVertexColor(1, 0.1, 0.1, 1)
+    -- absorbsBar:SetBlendMode("ADD")
+    absorbsBar:Hide()
+    absorbsBar.SetValue = DumbFunc
+    absorbsBar.overAbsorbGlow = overAbsorbGlow
 
     -- bar animation
     -- flash

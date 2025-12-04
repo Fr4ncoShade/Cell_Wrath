@@ -504,6 +504,38 @@ local function CreateSetting_Size(parent)
     return widget
 end
 
+local function CreateSetting_SizeWidth(parent)
+    local widget
+
+    if not settingWidgets["size-width"] then
+        widget = Cell.CreateFrame("CellIndicatorSettings_SizeWidth", parent, 240, 50)
+        settingWidgets["size-width"] = widget
+
+        widget.width = Cell.CreateSlider(L["Width"], widget, 1, 500, 110, 1)
+        widget.width:SetPoint("TOPLEFT", widget, 5, -20)
+        widget.func = function() end
+        widget.width.afterValueChangedFn = function(value)
+            if widget.func then
+                widget.func({value, 0})
+            end
+        end
+
+        function widget:SetFunc(func)
+            widget.func = func
+        end
+
+        function widget:SetDBValue(sizeTable)
+            if not sizeTable then return end
+            widget.width:SetValue(sizeTable[1] or 0)
+        end
+    else
+        widget = settingWidgets["size-width"]
+    end
+
+    widget:Show()
+    return widget
+end
+
 -- local function CreateSetting_SizeBar(parent)
 --     local widget
 
@@ -6749,6 +6781,7 @@ local builders = {
     ["shieldBarPosition"] = CreateSetting_ShieldBarPosition,
     ["anchor"] = CreateSetting_Anchor,
     ["size"] = CreateSetting_Size,
+    ["size-width"] = CreateSetting_SizeWidth,
     ["size-normal-big"] = CreateSetting_SizeNormalBig,
     ["size-square"] = CreateSetting_SizeSquare,
     -- ["size-bar"] = CreateSetting_SizeBar,

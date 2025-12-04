@@ -21,6 +21,8 @@ local LoadIndicatorList
 local listButtons = {}
 local ListHighlightFn
 
+-- Defaults and normalizer for PW:S bar colors
+
 -------------------------------------------------
 -- preview
 -------------------------------------------------
@@ -624,12 +626,13 @@ local function UpdateIndicators(layout, indicatorName, setting, value, value2)
                     indicator:SetFrameLevel(indicator:GetParent():GetFrameLevel()+t["frameLevel"])
                 end
                 -- update size
-                if t["size"] then
+                local size = t["size-width"] or t["size"]
+                if size then
                     -- NOTE: debuffs: ["size"] = {{normalSize}, {bigSize}}
-                    if t["indicatorName"] == "debuffs" then
-                        indicator:SetSize(t["size"][1], t["size"][2])
+                    if t["indicatorName"] == "debuffs" or t["indicatorName"] == "powerWordShield" then
+                        indicator:SetSize(size[1], size[2])
                     else
-                        P.Size(indicator, t["size"][1], t["size"][2])
+                        P.Size(indicator, size[1], size[2])
                     end
                 end
                 -- update thickness
@@ -700,6 +703,7 @@ local function UpdateIndicators(layout, indicatorName, setting, value, value2)
                         indicator:SetColor(unpack(t["color"]))
                     end
                 end
+                -- ensure PWS colors default exists
                 -- update colors
                 if t["colors"] then
                     indicator:SetColors(t["colors"])
@@ -835,6 +839,14 @@ local function UpdateIndicators(layout, indicatorName, setting, value, value2)
             indicator:SetAnchor(value)
         elseif setting == "frameLevel" then
             indicator:SetFrameLevel(indicator:GetParent():GetFrameLevel()+value)
+        elseif setting == "size-width" then
+            local height = (indicator.configs and indicator.configs["size"] and indicator.configs["size"][2]) or value[2] or 0
+            if indicator.SetSize then
+                indicator:SetSize(value[1], height)
+            else
+                P.Size(indicator, value[1], height)
+            end
+            ListHighlightFn(selected)
         elseif setting == "size" then
             if indicatorName == "debuffs" then
                 indicator:SetSize(value[1], value[2])
@@ -1585,7 +1597,7 @@ if Cell.isRetail or Cell.isMists then
     }
 
     if Cell.isMists then
-        indicatorSettings["powerWordShield"] = {"enabled", "checkbutton:shieldByMe", "shape", "size-square", "position", "frameLevel"}
+        indicatorSettings["powerWordShield"] = {"enabled", "checkbutton:shieldByMe", "shape", "size-width", "position", "frameLevel"}
     end
 
 elseif Cell.isCata or Cell.isWrath then
@@ -1611,7 +1623,7 @@ elseif Cell.isCata or Cell.isWrath then
         ["aggroBorder"] = {"enabled", "thickness", "frameLevel"},
         ["aggroBar"] = {"enabled", "size", "position", "frameLevel"},
         ["shieldBar"] = {"enabled", "checkbutton:onlyShowOvershields", "color-alpha", "height", "shieldBarPosition", "frameLevel"},
-        ["powerWordShield"] = {L["To show shield value, |cffff2727Glyph of Power Word: Shield|r is required"], "enabled", "checkbutton:shieldByMe", "shape", "size-square", "position", "frameLevel"},
+        ["powerWordShield"] = {L["To show shield value, |cffff2727Glyph of Power Word: Shield|r is required"], "enabled", "checkbutton:shieldByMe", "shape", "size-width", "position", "frameLevel"},
         ["aoeHealing"] = {"|cffb7b7b7"..L["Display a gradient texture when the unit receives a heal from your certain healing spells."], "enabled", "builtInAoEHealings", "customAoEHealings", "color", "height"},
         ["externalCooldowns"] = {L["Even if disabled, the settings below affect \"Externals + Defensives\" indicator"], "enabled", "builtInExternals", "customExternals", "durationVisibility", "checkbutton:showAnimation", "glowOptions", "size", "num:5", "orientation", "position", "frameLevel", "font1:stackFont", "font2:durationFont"},
         ["defensiveCooldowns"] = {L["Even if disabled, the settings below affect \"Externals + Defensives\" indicator"], "enabled", "builtInDefensives", "customDefensives", "durationVisibility", "checkbutton:showAnimation", "glowOptions", "size", "num:5", "orientation", "position", "frameLevel", "font1:stackFont", "font2:durationFont"},
@@ -1960,6 +1972,16 @@ local function ShowIndicatorSettings(id)
                 indicatorTable["size"][2] = value[2]
                 indicatorTable["border"] = value[3]
                 Cell.Fire("UpdateIndicators", notifiedLayout, indicatorName, currentSetting, value)
+            end)
+
+        -- size-width
+        elseif currentSetting == "size-width" then
+            local size = indicatorTable["size-width"] or indicatorTable["size"] or {0, 0}
+            w:SetDBValue(size)
+            w:SetFunc(function(value)
+                indicatorTable["size-width"] = value
+                indicatorTable["size"] = {value[1], (indicatorTable["size"] and indicatorTable["size"][2]) or value[2] or 0}
+                Cell.Fire("UpdateIndicators", notifiedLayout, indicatorName, "size-width", value)
             end)
 
         -- colors

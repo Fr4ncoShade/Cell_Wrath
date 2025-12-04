@@ -440,53 +440,49 @@ local function UpdatePreviewShields(r, g, b)
         previewButton2.widgets.incomingHeal:Hide()
     end
 
-    if Cell.isRetail or Cell.isMists then
-        if CellDB["appearance"]["healAbsorb"][1] then
-            previewButton2.widgets.absorbsBar:SetValue(0.8, 0.6)
-            if CellDB["appearance"]["healAbsorbInvertColor"] then
-                previewButton2.widgets.absorbsBar:SetVertexColor(F.InvertColor(previewButton2.widgets.healthBar:GetStatusBarColor()))
-                previewButton2.widgets.overAbsorbGlow:SetVertexColor(F.InvertColor(previewButton2.widgets.healthBar:GetStatusBarColor()))
-            else
-                previewButton2.widgets.absorbsBar:SetVertexColor(unpack(CellDB["appearance"]["healAbsorb"][2]))
-                previewButton2.widgets.overAbsorbGlow:SetVertexColor(unpack(CellDB["appearance"]["healAbsorb"][2]))
-            end
+    if CellDB["appearance"]["healAbsorb"][1] then
+        previewButton2.widgets.absorbsBar:SetValue(0.8, 0.6)
+        if CellDB["appearance"]["healAbsorbInvertColor"] then
+            previewButton2.widgets.absorbsBar:SetVertexColor(F.InvertColor(previewButton2.widgets.healthBar:GetStatusBarColor()))
+            previewButton2.widgets.overAbsorbGlow:SetVertexColor(F.InvertColor(previewButton2.widgets.healthBar:GetStatusBarColor()))
         else
-            previewButton2.widgets.absorbsBar:Hide()
-            previewButton2.widgets.overAbsorbGlow:Hide()
+            previewButton2.widgets.absorbsBar:SetVertexColor(unpack(CellDB["appearance"]["healAbsorb"][2]))
+            previewButton2.widgets.overAbsorbGlow:SetVertexColor(unpack(CellDB["appearance"]["healAbsorb"][2]))
         end
+    else
+        previewButton2.widgets.absorbsBar:Hide()
+        previewButton2.widgets.overAbsorbGlow:Hide()
     end
 
-    if Cell.isRetail or Cell.isMists or Cell.isWrath or Cell.isCata then
-        if CellDB["appearance"]["shield"][1] then
-            previewButton2.widgets.shieldBar:SetValue(0.6, 0.6)
-            previewButton2.widgets.shieldBar:SetVertexColor(unpack(CellDB["appearance"]["shield"][2]))
+    if CellDB["appearance"]["shield"][1] then
+        previewButton2.widgets.shieldBar:SetValue(0.6, 0.6)
+        previewButton2.widgets.shieldBar:SetVertexColor(unpack(CellDB["appearance"]["shield"][2]))
+    else
+        previewButton2.widgets.shieldBar:Hide()
+    end
+
+    local reverseFilling = CellDB["appearance"]["shield"][1] and CellDB["appearance"]["overshieldReverseFill"]
+
+    if CellDB["appearance"]["overshield"][1] and not reverseFilling then
+        previewButton2.widgets.overShieldGlow:SetVertexColor(unpack(CellDB["appearance"]["overshield"][2]))
+        previewButton2.widgets.overShieldGlow:Show()
+    else
+        previewButton2.widgets.overShieldGlow:Hide()
+    end
+
+    if reverseFilling then
+        previewButton2.widgets.shieldBarR:SetVertexColor(unpack(CellDB["appearance"]["shield"][2]))
+        previewButton2.widgets.shieldBarR:Show()
+
+        if CellDB["appearance"]["overshield"][1] then
+            previewButton2.widgets.overShieldGlowR:SetVertexColor(unpack(CellDB["appearance"]["overshield"][2]))
+            previewButton2.widgets.overShieldGlowR:Show()
         else
-            previewButton2.widgets.shieldBar:Hide()
-        end
-
-        local reverseFilling = CellDB["appearance"]["shield"][1] and CellDB["appearance"]["overshieldReverseFill"]
-
-        if CellDB["appearance"]["overshield"][1] and not reverseFilling then
-            previewButton2.widgets.overShieldGlow:SetVertexColor(unpack(CellDB["appearance"]["overshield"][2]))
-            previewButton2.widgets.overShieldGlow:Show()
-        else
-            previewButton2.widgets.overShieldGlow:Hide()
-        end
-
-        if reverseFilling then
-            previewButton2.widgets.shieldBarR:SetVertexColor(unpack(CellDB["appearance"]["shield"][2]))
-            previewButton2.widgets.shieldBarR:Show()
-
-            if CellDB["appearance"]["overshield"][1] then
-                previewButton2.widgets.overShieldGlowR:SetVertexColor(unpack(CellDB["appearance"]["overshield"][2]))
-                previewButton2.widgets.overShieldGlowR:Show()
-            else
-                previewButton2.widgets.overShieldGlowR:Hide()
-            end
-        else
-            previewButton2.widgets.shieldBarR:Hide()
             previewButton2.widgets.overShieldGlowR:Hide()
         end
+    else
+        previewButton2.widgets.shieldBarR:Hide()
+        previewButton2.widgets.overShieldGlowR:Hide()
     end
 end
 
@@ -1462,7 +1458,7 @@ local function CreateUnitButtonStylePane()
         Cell.Fire("UpdateAppearance", "shields")
     end)
     absorbCB:SetPoint("TOPLEFT", predCB, "BOTTOMLEFT", 0, -28)
-    absorbCB:SetEnabled(Cell.isRetail or Cell.isMists)
+    absorbCB:SetEnabled(true)
 
     absorbColorPicker = Cell.CreateColorPicker(unitButtonPane, L["Heal Absorb"], true, function(r, g, b, a)
         CellDB["appearance"]["healAbsorb"][2][1] = r
