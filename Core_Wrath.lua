@@ -356,7 +356,9 @@ function eventFrame:ADDON_LOADED(arg1)
         end
 
         -- click-casting --------------------------------------------------------------------------
-        Cell.vars.playerClass, Cell.vars.playerClassID = UnitClassBase("player")
+        local _, classFile, classID = UnitClass("player")
+        Cell.vars.playerClass = classFile
+        Cell.vars.playerClassID = classID
 
         if type(CellCharacterDB["clickCastings"]) ~= "table" then
             CellCharacterDB["clickCastings"] = {

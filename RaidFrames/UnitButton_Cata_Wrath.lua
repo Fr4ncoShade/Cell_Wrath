@@ -20,8 +20,7 @@ CELL_FADE_OUT_HEALTH_PERCENT = nil
 local UnitGUID = UnitGUID
 local UnitName = UnitName
 local GetUnitName = GetUnitName
-local UnitClassBase = UnitClassBase
-UnitClassBase = function(unit)
+local UnitClassBase = UnitClassBase or function(unit)
     return select(2, UnitClass(unit))
 end
 local UnitHealth = UnitHealth

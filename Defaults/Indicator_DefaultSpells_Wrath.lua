@@ -391,12 +391,19 @@ local dispellable = {
 function I.CanDispel(dispelType)
     if not dispelType then return end
 
-    if dispellable[Cell.vars.playerClassID] then
-        if Cell.vars.playerClassID == 7 then -- 萨满
+    local classID = Cell.vars.playerClassID
+    if not classID then
+        local _, _, cid = UnitClass("player")
+        classID = cid
+        Cell.vars.playerClassID = cid
+    end
+
+    if dispellable[classID] then
+        if classID == 7 then -- 萨满
             -- NOTE: 净化灵魂天赋可以解除诅咒
-            dispellable[Cell.vars.playerClassID]["Curse"] = IsSpellKnown(51886)
+            dispellable[classID]["Curse"] = IsSpellKnown(51886)
         end
-        return dispellable[Cell.vars.playerClassID][dispelType]
+        return dispellable[classID][dispelType]
     else
         return
     end

@@ -1134,12 +1134,43 @@ local UnitInPartyIsAI = UnitInPartyIsAI or function() end
 -- frame colors
 -------------------------------------------------
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+
+-- fallback maps for private/older clients where UnitClass may return localized names or ids
+local CLASS_ID_TO_TOKEN = {
+    [1] = "WARRIOR",
+    [2] = "PALADIN",
+    [3] = "HUNTER",
+    [4] = "ROGUE",
+    [5] = "PRIEST",
+    [6] = "DEATHKNIGHT",
+    [7] = "SHAMAN",
+    [8] = "MAGE",
+    [9] = "WARLOCK",
+    [11] = "DRUID",
+}
+
+local CLASS_NAME_TO_TOKEN = {}
+for token, name in pairs(LOCALIZED_CLASS_NAMES_MALE) do
+    CLASS_NAME_TO_TOKEN[name] = token
+end
+for token, name in pairs(LOCALIZED_CLASS_NAMES_FEMALE) do
+    CLASS_NAME_TO_TOKEN[name] = token
+end
+
+local function NormalizeClassToken(class)
+    if not class or class == "" then return end
+    if RAID_CLASS_COLORS[class] then return class end
+    if type(class) == "number" then return CLASS_ID_TO_TOKEN[class] end
+    if CLASS_NAME_TO_TOKEN[class] then return CLASS_NAME_TO_TOKEN[class] end
+end
+
 function F.GetClassColor(class)
-    if class and class ~= "" and RAID_CLASS_COLORS[class] then
-        if CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[class] then
-            return CUSTOM_CLASS_COLORS[class].r, CUSTOM_CLASS_COLORS[class].g, CUSTOM_CLASS_COLORS[class].b
+    local token = NormalizeClassToken(class)
+    if token and RAID_CLASS_COLORS[token] then
+        if CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[token] then
+            return CUSTOM_CLASS_COLORS[token].r, CUSTOM_CLASS_COLORS[token].g, CUSTOM_CLASS_COLORS[token].b
         else
-            return RAID_CLASS_COLORS[class]:GetRGB()
+            return RAID_CLASS_COLORS[token]:GetRGB()
         end
     else
         return 1, 1, 1
@@ -1147,11 +1178,12 @@ function F.GetClassColor(class)
 end
 
 function F.GetClassColorStr(class)
-    if class and class ~= "" and RAID_CLASS_COLORS[class] then
-        if CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[class] then
-            return "|c"..CUSTOM_CLASS_COLORS[class].colorStr
+    local token = NormalizeClassToken(class)
+    if token and RAID_CLASS_COLORS[token] then
+        if CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[token] then
+            return "|c"..CUSTOM_CLASS_COLORS[token].colorStr
         else
-            return "|c"..RAID_CLASS_COLORS[class].colorStr
+            return "|c"..RAID_CLASS_COLORS[token].colorStr
         end
     else
         return "|cffffffff"
