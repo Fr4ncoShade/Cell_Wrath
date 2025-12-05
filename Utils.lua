@@ -2417,11 +2417,7 @@ function F.IsInRange(unit, check)
             return IsItemInRange(harmItems[playerClass], unit)
         end
 
-        if not InCombatLockdown() then
-            return CheckInteractDistance(unit, 4) -- 28 yards
-        end
-
-        return true
+        return CheckInteractDistance(unit, 4) -- 28 yards
     end
 end
 
