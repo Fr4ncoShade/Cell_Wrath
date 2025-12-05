@@ -730,3 +730,49 @@ Cell.RegisterCallback("UpdateLayout", "RaidFrame_UpdateLayout", RaidFrame_Update
 --     end
 -- end
 -- Cell.RegisterCallback("UpdateVisibility", "RaidFrame_UpdateVisibility", RaidFrame_UpdateVisibility)
+
+-- WotLK Fix: Force update raid buttons when entering raid group type
+-- The RegisterAttributeDriver visibility state doesn't always sync properly after leaving BG/raid
+local function RaidFrame_GroupTypeChanged(groupType)
+    if groupType == "raid" then
+        -- Force update after a delay to ensure frame is visible
+        C_Timer.After(1, function()
+            if Cell.vars.groupType == "raid" then
+                -- Force show the frame if not visible
+                if not raidFrame:IsVisible() then
+                    raidFrame:Show()
+                end
+                -- Force update all raid buttons
+                for i = 1, 8 do
+                    local header = separatedHeaders[i]
+                    if header then
+                        for j = 1, 5 do
+                            local button = header[j]
+                            if button and button:IsVisible() then
+                                button._updateRequired = 1
+                                button._powerUpdateRequired = 1
+                                if button._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
+                                    Cell.bFuncs.UpdateAll(button)
+                                end
+                            end
+                        end
+                    end
+                end
+                -- Also update combined header buttons
+                if combinedHeader then
+                    for i = 1, 40 do
+                        local button = combinedHeader[i]
+                        if button and button:IsVisible() then
+                            button._updateRequired = 1
+                            button._powerUpdateRequired = 1
+                            if button._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
+                                Cell.bFuncs.UpdateAll(button)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end
+Cell.RegisterCallback("GroupTypeChanged", "RaidFrame_GroupTypeChanged", RaidFrame_GroupTypeChanged)

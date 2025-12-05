@@ -232,6 +232,8 @@ hoverFrame:SetScript("OnLeave", function()
 end)
 
 local function UpdateHoverFrame()
+    -- WotLK: Safety check - currentLayoutTable may not be initialized yet
+    if not Cell.vars.currentLayoutTable then return end
     local anchor = Cell.vars.currentLayoutTable["main"]["anchor"]
     local top, bottom, left, right
 

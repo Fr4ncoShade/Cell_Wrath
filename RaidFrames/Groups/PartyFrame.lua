@@ -392,3 +392,41 @@ Cell.RegisterCallback("UpdateLayout", "PartyFrame_UpdateLayout", PartyFrame_Upda
 -- f:SetAttribute("_onstate-groupstate", [[
 --     print(stateid, newstate)
 -- ]])
+
+-- WotLK Fix: Force update party buttons when entering party group type
+-- The RegisterAttributeDriver visibility state doesn't always sync properly after leaving BG/raid
+local function PartyFrame_GroupTypeChanged(groupType)
+    if groupType == "party" then
+        -- Force update after a delay to ensure frame is visible
+        C_Timer.After(1, function()
+            if Cell.vars.groupType == "party" then
+                -- Force show the frame if not visible
+                if not partyFrame:IsVisible() then
+                    partyFrame:Show()
+                end
+                -- Force update all party buttons
+                for i = 1, 5 do
+                    local button = header[i]
+                    if button then
+                        if button:IsVisible() then
+                            button._updateRequired = 1
+                            button._powerUpdateRequired = 1
+                            if button._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
+                                Cell.bFuncs.UpdateAll(button)
+                            end
+                        end
+                        -- Also update pet button
+                        if button.petButton and button.petButton:IsVisible() then
+                            button.petButton._updateRequired = 1
+                            button.petButton._powerUpdateRequired = 1
+                            if button.petButton._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
+                                Cell.bFuncs.UpdateAll(button.petButton)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end
+Cell.RegisterCallback("GroupTypeChanged", "PartyFrame_GroupTypeChanged", PartyFrame_GroupTypeChanged)
