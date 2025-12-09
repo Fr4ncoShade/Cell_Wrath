@@ -441,13 +441,21 @@ local function Debuffs_ShowTooltip(debuffs, show)
 
             -- https://warcraft.wiki.gg/wiki/API_ScriptRegion_EnableMouse
             if not debuffs.enableBlacklistShortcut then
-                debuffs[i]:SetMouseClickEnabled(false)
+                if Cell.isWrath or Cell.isVanilla or Cell.isCata then
+                    debuffs[i]:EnableMouse(true)
+                else
+                    debuffs[i]:SetMouseClickEnabled(false)
+                end
             end
         else
             debuffs[i]:SetScript("OnEnter", nil)
             debuffs[i]:SetScript("OnLeave", nil)
             if debuffs.enableBlacklistShortcut then
-                debuffs[i]:SetMouseMotionEnabled(false)
+                if Cell.isWrath or Cell.isVanilla or Cell.isCata then
+                     debuffs[i]:EnableMouse(false)
+                else
+                     debuffs[i]:SetMouseMotionEnabled(false)
+                end
             else
                 debuffs[i]:EnableMouse(false)
             end

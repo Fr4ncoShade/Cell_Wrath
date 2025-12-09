@@ -132,6 +132,7 @@ local function Shared_CreateCooldown_Vertical(frame)
     local cooldown = CreateFrame("StatusBar", nil, frame)
     frame.cooldown = cooldown
     cooldown:Hide()
+    cooldown:EnableMouse(false)
 
     cooldown.GetCooldownDuration = VerticalCooldown_GetCooldownDuration
     cooldown.ShowCooldown = VerticalCooldown_ShowCooldown
