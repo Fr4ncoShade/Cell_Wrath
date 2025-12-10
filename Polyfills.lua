@@ -1157,11 +1157,90 @@ if not C_ChatInfo then
     end
 end
 
--- C_AddOns
-if not C_AddOns then
-    C_AddOns = {}
+C_AddOns = C_AddOns or {}
+
+-- Mirror the modern C_AddOns API to the classic global functions so other addons
+-- can safely hook them (e.g. Details! calls hooksecurefunc on LoadAddOn).
+if not C_AddOns.GetAddOnMetadata then
     function C_AddOns.GetAddOnMetadata(addon, field)
-        return GetAddOnMetadata(addon, field)
+        if GetAddOnMetadata then
+            return GetAddOnMetadata(addon, field)
+        end
+    end
+end
+
+if not C_AddOns.IsAddOnLoaded then
+    function C_AddOns.IsAddOnLoaded(addon)
+        if IsAddOnLoaded then
+            return IsAddOnLoaded(addon)
+        end
+        return false
+    end
+end
+
+if not C_AddOns.LoadAddOn then
+    function C_AddOns.LoadAddOn(addon)
+        if LoadAddOn then
+            return LoadAddOn(addon)
+        end
+        return false, "MISSING"
+    end
+end
+
+if not C_AddOns.GetNumAddOns then
+    function C_AddOns.GetNumAddOns()
+        if GetNumAddOns then
+            return GetNumAddOns()
+        end
+        return 0
+    end
+end
+
+if not C_AddOns.GetAddOnInfo then
+    function C_AddOns.GetAddOnInfo(addonIndexOrName)
+        if GetAddOnInfo then
+            return GetAddOnInfo(addonIndexOrName)
+        end
+    end
+end
+
+if not C_AddOns.GetAddOnDependencies then
+    function C_AddOns.GetAddOnDependencies(addonName)
+        if GetAddOnDependencies then
+            local deps = {GetAddOnDependencies(addonName)}
+            if #deps > 0 then
+                return deps
+            end
+        end
+        return {}
+    end
+end
+
+if not C_AddOns.GetAddOnEnableState then
+    function C_AddOns.GetAddOnEnableState(character, addonName)
+        if GetAddOnEnableState then
+            return GetAddOnEnableState(character, addonName)
+        end
+        local enabled = C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(addonName)
+        return enabled and 1 or 0
+    end
+end
+
+if not C_AddOns.EnableAddOn then
+    function C_AddOns.EnableAddOn(addonName, characterName)
+        if EnableAddOn then
+            return EnableAddOn(addonName, characterName)
+        end
+        return false
+    end
+end
+
+if not C_AddOns.DisableAddOn then
+    function C_AddOns.DisableAddOn(addonName, characterName)
+        if DisableAddOn then
+            return DisableAddOn(addonName, characterName)
+        end
+        return false
     end
 end
 
