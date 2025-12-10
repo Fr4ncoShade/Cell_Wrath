@@ -996,12 +996,12 @@ do
     end
 
     local function CreateTimer(duration, callback, isTicker)
-        -- Validate arguments to prevent errors
+        -- Validate arguments - use defaults instead of erroring
         if type(duration) ~= "number" then
-            error("C_Timer: duration must be a number, got " .. type(duration))
+            duration = 0.01 -- fallback to minimal duration
         end
         if type(callback) ~= "function" then
-            error("C_Timer: callback must be a function, got " .. type(callback))
+            callback = function() end -- no-op callback
         end
 
         local timer = setmetatable({}, Ticker)
@@ -1016,10 +1016,10 @@ do
             if total >= duration then
                 if isTicker then
                     total = 0
-                    callback(timer)
+                    pcall(callback, timer) -- Protect callback execution
                 else
                     self:SetScript("OnUpdate", nil)
-                    callback()
+                    pcall(callback) -- Protect callback execution
                 end
             end
         end)
@@ -1294,6 +1294,26 @@ if not C_AddOns then
     C_AddOns = {}
     function C_AddOns.GetAddOnMetadata(addon, field)
         return GetAddOnMetadata(addon, field)
+    end
+end
+
+-- LoadAddOn polyfill (ensure it exists as a global function for other addons to hook)
+if not LoadAddOn then
+    -- WotLK has LoadAddOn, but it might not be available on all custom servers
+    -- Create a basic implementation using the native API if it exists
+    function LoadAddOn(addonName)
+        -- Try to use native LoadAddOn if it exists (shouldn't happen, but safe)
+        if _G._CellOriginalLoadAddOn then
+            return _G._CellOriginalLoadAddOn(addonName)
+        end
+        -- Fallback: return false (addon not loaded)
+        return false
+    end
+elseif type(LoadAddOn) ~= "function" then
+    -- LoadAddOn exists but isn't a function (corrupted?), fix it
+    local old = LoadAddOn
+    function LoadAddOn(addonName)
+        return false
     end
 end
 
