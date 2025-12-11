@@ -5131,8 +5131,8 @@ local function CreateSpellButtons(parent, class, spells, disableds)
         end)
 
         if spellId == 45438 then
-            -- 深寒凝冰 覆盖了 寒冰屏障
-            spellButtons[buttonIndex].icon:SetTexture(135841)
+            -- 深寒凝冰 覆盖了 寒冰屏障 (Deep Freeze uses Ice Barrier icon)
+            spellButtons[buttonIndex].icon:SetTexture("Interface\\Icons\\Spell_Frost_Frost")
         else
             local icon = select(2, F.GetSpellInfo(spellId))
             spellButtons[buttonIndex].icon:SetTexture(icon)

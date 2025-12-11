@@ -513,41 +513,41 @@ local function InitIndicator(indicatorName)
         end
 
     elseif indicatorName == "externalCooldowns" then
-        local icons = {135936, 135964, 135966, 237510, 237542}
+        local icons = {"Interface\\Icons\\Spell_Holy_GuardianSpirit", "Interface\\Icons\\Spell_Holy_PowerInfusion", "Interface\\Icons\\Spell_Holy_PainSupression", "Interface\\Icons\\Spell_Holy_DivineProtection", "Interface\\Icons\\Spell_Holy_Renew"}
         for i = 1, 5 do
             SetOnUpdate(indicator[i], nil, icons[i], 0)
         end
     elseif indicatorName == "defensiveCooldowns" then
-        local icons = {135919, 136120, 135841, 132362, 132199}
+        local icons = {"Interface\\Icons\\Spell_Nature_StoneSkinTotem", "Interface\\Icons\\Ability_Warrior_ShieldWall", "Interface\\Icons\\Spell_Frost_Frost", "Interface\\Icons\\Spell_Holy_DivineIntervention", "Interface\\Icons\\Spell_Holy_SealOfProtection"}
         for i = 1, 5 do
             SetOnUpdate(indicator[i], nil, icons[i], 0)
         end
     elseif indicatorName == "allCooldowns" then
-        local icons = {135936, 136120, 135966, 132362, 237542}
+        local icons = {"Interface\\Icons\\Spell_Holy_GuardianSpirit", "Interface\\Icons\\Ability_Warrior_ShieldWall", "Interface\\Icons\\Spell_Holy_PainSupression", "Interface\\Icons\\Spell_Holy_DivineIntervention", "Interface\\Icons\\Spell_Holy_Renew"}
         for i = 1, 5 do
             SetOnUpdate(indicator[i], nil, icons[i], 0)
         end
     elseif indicatorName == "missingBuffs" then
-        local buffs = {135987, 135932, 136078}
+        local buffs = {"Interface\\Icons\\Spell_Holy_WordFortitude", "Interface\\Icons\\Spell_Nature_Regeneration", "Interface\\Icons\\Spell_Holy_MagicalSentry"}
         for i = 1, 3 do
             indicator[i]:SetCooldown(0, 0, nil, buffs[i], 0)
         end
     elseif string.find(indicatorName, "indicator") then
         if indicator.indicatorType == "icons" then
             for i = 1, 10 do
-                SetOnUpdate(indicator[i], nil, 134400, i)
+                SetOnUpdate(indicator[i], nil, "Interface\\Icons\\Spell_Nature_Lightning", i)
             end
         elseif indicator.indicatorType == "bars" or indicator.indicatorType == "blocks" then
             local colors = {1, 0.26667, 0.4}
             for i = 1, 10 do
-                SetOnUpdate(indicator[i], nil, 134400, i, colors)
+                SetOnUpdate(indicator[i], nil, "Interface\\Icons\\Spell_Nature_Lightning", i, colors)
             end
         elseif indicator.indicatorType == "text" then
             indicator.isCustomText = true -- mark for custom glow
-            SetOnUpdate(indicator, nil, 134400, 5)
+            SetOnUpdate(indicator, nil, "Interface\\Icons\\Spell_Nature_Lightning", 5)
             --! overwrite
             indicator:SetScript("OnShow", function()
-                indicator:SetCooldown(GetTime(), 13, nil, 134400, 5)
+                indicator:SetCooldown(GetTime(), 13, nil, "Interface\\Icons\\Spell_Nature_Lightning", 5)
                 indicator.preview.elapsedTime = 0
                 C_Timer.After(0.2, function()
                     indicator:SetWidth(indicator.text:GetStringWidth())
@@ -563,7 +563,7 @@ local function InitIndicator(indicatorName)
                 indicator.fadeOut = fadeOut
                 indicator.preview.elapsedTime = 13 -- update now!
             end
-            SetOnUpdate(indicator, nil, 134400, 0)
+            SetOnUpdate(indicator, nil, "Interface\\Icons\\Spell_Nature_Lightning", 0)
         elseif indicator.indicatorType == "glow" then
             function indicator:SetFadeOut(fadeOut)
                 indicator.fadeOut = fadeOut
@@ -572,16 +572,16 @@ local function InitIndicator(indicatorName)
             hooksecurefunc(indicator, "SetupGlow", function()
                 indicator.preview.elapsedTime = 13 -- update now!
             end)
-            SetOnUpdate(indicator, nil, 134400, 0)
+            SetOnUpdate(indicator, nil, "Interface\\Icons\\Spell_Nature_Lightning", 0)
         elseif indicator.indicatorType == "border" then
             function indicator:SetFadeOut(fadeOut)
                 indicator.fadeOut = fadeOut
                 indicator.preview.elapsedTime = 13 -- update now!
             end
             local color = {1, 0.26667, 0.4}
-            SetOnUpdate(indicator, nil, 134400, 0, color)
+            SetOnUpdate(indicator, nil, "Interface\\Icons\\Spell_Nature_Lightning", 0, color)
         else
-            SetOnUpdate(indicator, nil, 134400, 5)
+            SetOnUpdate(indicator, nil, "Interface\\Icons\\Spell_Nature_Lightning", 5)
         end
     end
     indicator.init = true
