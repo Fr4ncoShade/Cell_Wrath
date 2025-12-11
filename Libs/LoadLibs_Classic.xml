@@ -7,6 +7,7 @@
     <!-- externals -->
     <Script file="LibStub\LibStub.lua"/>
     <Include file="CallbackHandler-1.0\CallbackHandler-1.0.xml"/>
+    <!-- Cell embeds LSM with lower priority (v3030001) so other addons' LSM takes precedence -->
     <Include file="LibSharedMedia-3.0\lib.xml"/>
     <Include file="LibCustomGlow-1.0\LibCustomGlow-1.0.xml"/>
     <Include file="AceComm-3.0\AceComm-3.0.xml"/>

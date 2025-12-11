@@ -1015,10 +1015,11 @@ local function EditBox_AddConfirmButton(self, func, mode)
     end)
 end
 
-function Cell.CreateEditBox(parent, width, height, isTransparent, isMultiLine, isNumeric, font)
+function Cell.CreateEditBox(parent, width, height, isTransparent, isMultiLine, isNumeric, fontObj)
     local eb = CreateFrame("EditBox", nil, parent, nil)
     if not isTransparent then Cell.StylizeFrame(eb, {0.115, 0.115, 0.115, 0.9}) end
-    eb:SetFontObject(font or font_name)
+    -- Use font object directly, fallback to _G lookup for WotLK compatibility
+    eb:SetFontObject(fontObj or _G[font_name])
     eb:SetMultiLine(isMultiLine)
     eb:SetMaxLetters(0)
     eb:SetJustifyH("LEFT")

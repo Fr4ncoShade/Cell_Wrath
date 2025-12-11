@@ -1585,21 +1585,30 @@ Cell.vars.texture = "Interface\\AddOns\\Cell_Wrath\\Media\\statusbar.tga"
 Cell.vars.emptyTexture = "Interface\\AddOns\\Cell_Wrath\\Media\\empty.tga"
 Cell.vars.whiteTexture = "Interface\\AddOns\\Cell_Wrath\\Media\\white.tga"
 
-local LSM = LibStub("LibSharedMedia-3.0", true)
--- NOTE: Delayed LSM registration to avoid triggering Quartz callbacks before it's ready
--- Register on PLAYER_LOGIN instead of at file load time
-local lsmRegistered = false
+-- Get LSM from other addons if available (Cell no longer embeds it to avoid conflicts)
+local LSM = LibStub and LibStub("LibSharedMedia-3.0", true) or nil
+
+-- REMOVED: LSM Registration AND Embedding
+-- Cell_Wrath now operates in FETCH-ONLY mode with LibSharedMedia.
+-- This prevents triggering LSM callbacks that affect other addons (Quartz, NotPlater, XPerl).
+--
+-- Cell can still FETCH textures/fonts from other addons, but won't REGISTER its own.
+-- Tradeoff: Other addons can't use Cell's "Cell DEFAULT" texture or "Visitor" font through LSM.
+--
+-- Why this fixes the problem:
+-- - When ANY addon calls LSM:Register(), it fires callbacks to ALL addons using LSM
+-- - These callbacks can trigger before some addons (like Quartz) are fully initialized
+-- - By not registering, Cell_Wrath won't trigger any callbacks or interfere with other addons
+-- - Cell's resources remain available through direct paths for Cell's internal use
+
+-- No-op function for compatibility (called from Core_Wrath.lua)
 function F.RegisterWithLSM()
-    if not lsmRegistered and LSM then
-        LSM:Register("statusbar", "Cell ".._G.DEFAULT, Cell.vars.texture)
-        LSM:Register("font", "Visitor", [[Interface\Addons\Cell_Wrath\Media\Fonts\visitor.ttf]], 255)
-        lsmRegistered = true
-    end
+    -- Intentionally empty - Cell no longer registers with LSM
 end
 
 function F.GetBarTexture()
     --! update Cell.vars.texture for further use in UnitButton_OnLoad
-    if LSM:IsValid("statusbar", CellDB["appearance"]["texture"]) then
+    if LSM and LSM:IsValid("statusbar", CellDB["appearance"]["texture"]) then
         Cell.vars.texture = LSM:Fetch("statusbar", CellDB["appearance"]["texture"])
     else
         Cell.vars.texture = "Interface\\AddOns\\Cell_Wrath\\Media\\statusbar.tga"
@@ -1608,14 +1617,14 @@ function F.GetBarTexture()
 end
 
 function F.GetBarTextureByName(name)
-    if LSM:IsValid("statusbar", name) then
+    if LSM and LSM:IsValid("statusbar", name) then
         return LSM:Fetch("statusbar", name)
     end
     return "Interface\\AddOns\\Cell_Wrath\\Media\\statusbar.tga"
 end
 
 function F.GetFont(font)
-    if font and LSM:IsValid("font", font) then
+    if font and LSM and LSM:IsValid("font", font) then
         return LSM:Fetch("font", font)
     elseif type(font) == "string" and strfind(strlower(font), ".ttf$") then
         return font
@@ -1640,7 +1649,7 @@ function F.GetFontItems()
     local items = {}
     local fonts, fontNames
 
-    -- if LSM then
+    if LSM then
         fonts, fontNames = F.Copy(LSM:HashTable("font")), F.Copy(LSM:List("font"))
         -- insert default font
         tinsert(fontNames, 1, defaultFontName)
@@ -1656,13 +1665,16 @@ function F.GetFontItems()
                 -- end,
             })
         end
-    -- else
-    --     fontNames = {defaultFontName}
-    --     fonts = {[defaultFontName] = defaultFont}
+    else
+        -- LSM not available, show only default font
+        fontNames = {defaultFontName}
+        fonts = {[defaultFontName] = defaultFont}
 
-    --     tinsert(items, {
-    --         ["text"] = defaultFontName,
-    --         ["font"] = defaultFont,
+        tinsert(items, {
+            ["text"] = defaultFontName,
+            ["font"] = defaultFont,
+        })
+    end
     --         -- ["onClick"] = function()
     --         --     CellDB["appearance"]["font"] = defaultFontName
     --         --     Cell.Fire("UpdateAppearance", "font")

@@ -1981,139 +1981,107 @@ do
 end
 
 -------------------------------------------------
--- Font object helper for polyfills
+-- REMOVED: All global font polyfills and hooks
+-- They were masking the root cause, not fixing it
 -------------------------------------------------
-local function getFontObject(fontOrName)
-    if not fontOrName then
-        return nil
-    end
-
-    if type(fontOrName) == "string" then
-        local fontObj = _G[fontOrName]
-        if not fontObj then
-            -- Font doesn't exist yet, return nil
-            return nil
-        end
-        return fontObj
-    end
-    return fontOrName
-end
 
 -------------------------------------------------
--- Button font object setters polyfill for WotLK
--- In WotLK, SetDisabledFontObject/SetNormalFontObject/SetHighlightFontObject
--- require font objects, but retail allows string font names.
--- This polyfill makes WotLK accept both.
+-- DEBUG: Track font modifications to find root cause
 -------------------------------------------------
 do
-    local btn = CreateFrame("Button")
-    local mt = getmetatable(btn)
-
-    if mt and mt.__index and not mt.__index._CellFontSetterPolyfill then
-        -- Wrap SetDisabledFontObject
-        if type(mt.__index.SetDisabledFontObject) == "function" then
-            local origSetDisabledFontObject = mt.__index.SetDisabledFontObject
-            function mt.__index:SetDisabledFontObject(font)
-                local fontObj = getFontObject(font)
-                if not fontObj then
-                    -- Skip if font doesn't exist to avoid errors
-                    return
-                end
-                return origSetDisabledFontObject(self, fontObj)
-            end
-        end
-
-        -- Wrap SetNormalFontObject
-        if type(mt.__index.SetNormalFontObject) == "function" then
-            local origSetNormalFontObject = mt.__index.SetNormalFontObject
-            function mt.__index:SetNormalFontObject(font)
-                local fontObj = getFontObject(font)
-                if not fontObj then
-                    return
-                end
-                return origSetNormalFontObject(self, fontObj)
-            end
-        end
-
-        -- Wrap SetHighlightFontObject
-        if type(mt.__index.SetHighlightFontObject) == "function" then
-            local origSetHighlightFontObject = mt.__index.SetHighlightFontObject
-            function mt.__index:SetHighlightFontObject(font)
-                local fontObj = getFontObject(font)
-                if not fontObj then
-                    return
-                end
-                return origSetHighlightFontObject(self, fontObj)
-            end
-        end
-
-        mt.__index._CellFontSetterPolyfill = true
-    end
-end
-
--------------------------------------------------
--- FontString SetFontObject polyfill for WotLK
--- Same issue: WotLK requires font objects, not string names
--------------------------------------------------
-do
+    local debugLog = {}
     local fs = UIParent:CreateFontString()
     local mt = getmetatable(fs)
 
-    if mt and mt.__index and not mt.__index._CellFontStringPolyfill then
-        if type(mt.__index.SetFontObject) == "function" then
-            local origSetFontObject = mt.__index.SetFontObject
-            function mt.__index:SetFontObject(font)
-                local fontObj = getFontObject(font)
-                if not fontObj then
-                    -- Skip if font doesn't exist to avoid errors
-                    return
+    if mt and mt.__index and not mt.__index._CellDebugHooked then
+        local origSetFont = mt.__index.SetFont
+        local origSetFontObject = mt.__index.SetFontObject
+
+        -- Hook SetFont to track who's modifying fonts
+        mt.__index.SetFont = function(self, path, size, flags)
+            local parent = self:GetParent()
+            local parentName = parent and parent:GetName() or ""
+            local selfName = self:GetName() or ""
+            local caller = debugstack(2, 3, 0)
+
+            -- ONLY alert if Cell is modifying NotPlater/Quartz/XPerl frames
+            local isTargetAddon = parentName:match("Quartz") or parentName:match("NotPlater") or
+                                 parentName:match("XPerl") or selfName:match("Quartz") or
+                                 selfName:match("NotPlater") or selfName:match("XPerl")
+
+            if isTargetAddon and caller:match("Cell_Wrath") then
+                print(string.format("|cFFFF0000[Cell Debug]|r Cell modifying %s addon!",
+                    parentName:match("Quartz") and "Quartz" or parentName:match("NotPlater") and "NotPlater" or "XPerl"))
+                print("  Parent: " .. (parentName ~= "" and parentName or "nil"))
+                print("  Self: " .. (selfName ~= "" and selfName or "nil"))
+                print("  Size: " .. tostring(size))
+                print("  Stack:\n" .. caller)
+
+                table.insert(debugLog, {
+                    time = GetTime(),
+                    parent = parentName,
+                    self = selfName,
+                    path = path,
+                    size = size,
+                    flags = flags or "none",
+                    caller = caller
+                })
+            end
+
+            return origSetFont(self, path, size, flags)
+        end
+
+        -- Hook SetFontObject
+        mt.__index.SetFontObject = function(self, fontObj)
+            local parent = self:GetParent()
+            local parentName = parent and parent:GetName() or ""
+            local selfName = self:GetName() or ""
+            local caller = debugstack(2, 3, 0)
+
+            -- ONLY alert if Cell is modifying NotPlater/Quartz/XPerl frames
+            local isTargetAddon = parentName:match("Quartz") or parentName:match("NotPlater") or
+                                 parentName:match("XPerl") or selfName:match("Quartz") or
+                                 selfName:match("NotPlater") or selfName:match("XPerl")
+
+            if isTargetAddon and caller:match("Cell_Wrath") then
+                print(string.format("|cFFFF0000[Cell Debug]|r Cell SetFontObject on %s addon!",
+                    parentName:match("Quartz") and "Quartz" or parentName:match("NotPlater") and "NotPlater" or "XPerl"))
+                print("  Parent: " .. (parentName ~= "" and parentName or "nil"))
+                print("  Self: " .. (selfName ~= "" and selfName or "nil"))
+                print("  FontObj: " .. tostring(fontObj))
+                print("  Stack:\n" .. caller)
+            end
+
+            return origSetFontObject(self, fontObj)
+        end
+
+        mt.__index._CellDebugHooked = true
+
+        -- Export debug log
+        _G.CellDebugFontLog = debugLog
+
+        -- Slash command
+        SLASH_CELLDEBUG1 = "/celldebug"
+        SlashCmdList["CELLDEBUG"] = function(msg)
+            if msg == "fonts" then
+                print("=== Cell Font Debug Log (" .. #debugLog .. " entries) ===")
+                for i = math.max(1, #debugLog - 20), #debugLog do
+                    local e = debugLog[i]
+                    print(string.format("[%.2f] %s.%s size=%s",
+                        e.time, e.parent, e.self, tostring(e.size)))
+                    if e.caller:match("Cell_Wrath") then
+                        print("  |cFFFF0000FROM CELL:|r " .. e.caller:match("[^\n]+"))
+                    end
                 end
-                return origSetFontObject(self, fontObj)
+            elseif msg == "clear" then
+                wipe(debugLog)
+                print("Debug log cleared")
+            else
+                print("Cell Debug: /celldebug fonts | clear")
             end
         end
 
-        mt.__index._CellFontStringPolyfill = true
-    end
-end
-
--------------------------------------------------
--- FontString SetText/SetFormattedText fallback
--- DISABLED: Using delayed LSM registration instead (Option 2)
--- This global hook was affecting all addons. Delaying LSM registration until
--- PLAYER_LOGIN prevents triggering callbacks before addons like Quartz are ready.
--------------------------------------------------
-do
-    local fs = UIParent:CreateFontString()
-    local mt = getmetatable(fs)
-
-    if mt and mt.__index and not mt.__index._CellFontStringTextFallback then
-        -- Get default font properties from GameFontNormal to avoid breaking other addons
-        local defaultFontPath, defaultFontSize, defaultFontFlags = GameFontNormal:GetFont()
-
-        local function ensureFont(self)
-            local font = self:GetFont()
-            if not font then
-                -- Use GameFontNormal's properties instead of STANDARD_TEXT_FONT
-                -- This preserves shadows and proper sizing
-                self:SetFont(defaultFontPath, defaultFontSize, defaultFontFlags)
-            end
-        end
-
-        local origSetText = mt.__index.SetText
-        function mt.__index:SetText(text)
-            ensureFont(self)
-            return origSetText(self, text)
-        end
-
-        if type(mt.__index.SetFormattedText) == "function" then
-            local origSetFormattedText = mt.__index.SetFormattedText
-            function mt.__index:SetFormattedText(fmt, ...)
-                ensureFont(self)
-                return origSetFormattedText(self, fmt, ...)
-            end
-        end
-
-        mt.__index._CellFontStringTextFallback = true
+        print("|cFF00FF00[Cell]|r Debug logging active. Use /celldebug fonts")
     end
 end
 

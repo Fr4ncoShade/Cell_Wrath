@@ -697,9 +697,9 @@ local function UpdateSpecVars(skipTalentUpdate)
 end
 
 function eventFrame:PLAYER_LOGIN()
-    -- Register with LibSharedMedia after all addons are loaded
-    -- This prevents triggering LSM callbacks before other addons (like Quartz) are ready
-    F.RegisterWithLSM()
+    -- NOTE: Cell no longer registers with LibSharedMedia to avoid triggering callbacks
+    -- that interfere with other addons. See Utils.lua for full explanation.
+    -- F.RegisterWithLSM()  -- Now a no-op
 
     eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
@@ -814,8 +814,8 @@ function eventFrame:PLAYER_TALENT_UPDATE()
 end
 
 function eventFrame:PLAYER_ENTERING_WORLD()
-    -- Register with LibSharedMedia (handles both login and /reload)
-    F.RegisterWithLSM()
+    -- NOTE: Cell no longer registers with LibSharedMedia
+    -- F.RegisterWithLSM()  -- Now a no-op
 
     -- On reload/login, force a roster refresh if we're already grouped so names/indicators populate.
     if IsInRaid() or IsInGroup() then

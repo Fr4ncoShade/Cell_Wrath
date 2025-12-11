@@ -21,12 +21,13 @@ local function CreateChangelogsFrame()
     content:SetSpacing("h1", 9)
     content:SetSpacing("h2", 7)
     content:SetSpacing("p", 5)
-    content:SetFontObject("h1", "CELL_WRATH_FONT_CLASS_TITLE")
-    content:SetFontObject("h2", "CELL_WRATH_FONT_CLASS")
+    -- Use explicit font objects instead of string names for WotLK compatibility
+    content:SetFontObject("h1", _G["CELL_WRATH_FONT_CLASS_TITLE"])
+    content:SetFontObject("h2", _G["CELL_WRATH_FONT_CLASS"])
     if LOCALE_zhCN then
-        content:SetFontObject("p", "CELL_WRATH_FONT_WIDGET")
+        content:SetFontObject("p", _G["CELL_WRATH_FONT_WIDGET"])
     else
-        content:SetFontObject("p", "CELL_WRATH_FONT_CHINESE")
+        content:SetFontObject("p", _G["CELL_WRATH_FONT_CHINESE"])
     end
     content:SetPoint("TOP", 0, -10)
     content:SetWidth(changelogsFrame:GetWidth() - 30)
