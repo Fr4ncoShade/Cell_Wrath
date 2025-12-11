@@ -3305,10 +3305,10 @@ local function CreateGrid(parent, text, width)
     grid.text:SetJustifyH("LEFT")
     grid.text:SetPoint("LEFT", P.Scale(5), 0)
     grid.text:SetPoint("RIGHT", P.Scale(-5), 0)
-    grid.text:SetText(text)
+    grid.text:SetText(text or "")
 
     function grid:SetText(s)
-        grid.text:SetText(s)
+        grid.text:SetText(s or "")
     end
 
     function grid:GetText()
@@ -3390,7 +3390,7 @@ function Cell.CreateBindingListButton(parent, modifier, bindKey, bindType, bindA
         if actionGrid:IsTruncated() then
             CellTooltip:SetOwner(actionGrid, "ANCHOR_TOPLEFT", 0, P.Scale(1))
             CellTooltip:AddLine(L["Action"])
-            CellTooltip:AddLine("|cffffffff" .. actionGrid:GetText())
+            CellTooltip:AddLine("|cffffffff" .. (actionGrid:GetText() or ""))
             CellTooltip:Show()
         end
     end)

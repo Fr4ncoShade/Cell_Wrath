@@ -8,6 +8,14 @@ local P = Cell.pixelPerfectFuncs
 
 CELL_SUMMON_ICONS_ENABLED = false
 
+-- Retail has CombatLogGetCurrentEventInfo; Wrath passes args directly
+local function GetCLEUInfo(...)
+    if CombatLogGetCurrentEventInfo then
+        return CombatLogGetCurrentEventInfo()
+    end
+    return ...
+end
+
 -------------------------------------------------
 -- event
 -------------------------------------------------
@@ -27,8 +35,9 @@ local SOULSTONE = F.GetSpellInfo(20707)
 local RESURRECTING = F.GetSpellInfo(160029)
 
 local cleuFrame = CreateFrame("Frame")
-cleuFrame:SetScript("OnEvent", function()
-    local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName = CombatLogGetCurrentEventInfo()
+cleuFrame:SetScript("OnEvent", function(_, event, ...)
+    if event ~= "COMBAT_LOG_EVENT_UNFILTERED" then return end
+    local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName = GetCLEUInfo(...)
 
     if subEvent == "SPELL_AURA_REMOVED" then
         if spellName == SOULSTONE then

@@ -166,6 +166,7 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("VARIABLES_LOADED")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 function eventFrame:VARIABLES_LOADED()
     SetCVar("predictedHealth", 1)
@@ -535,11 +536,11 @@ Cell.vars.raidSetup = {
 }
 
 function eventFrame:GROUP_ROSTER_UPDATE()
-    -- F.Debug("|cff00ff00=== GROUP_ROSTER_UPDATE FIRED ===")
+    F.Debug("|cff00ff00=== GROUP_ROSTER_UPDATE FIRED ===")
     local numGroupMembers = GetNumGroupMembers()
     local isInRaid = IsInRaid()
     local isInGroup = IsInGroup()
-    -- F.Debug("|cff00ff00NumGroupMembers:|r", numGroupMembers, "|cff00ff00IsInRaid:|r", isInRaid, "|cff00ff00IsInGroup:|r", isInGroup)
+    F.Debug("|cff00ff00NumGroupMembers:|r", numGroupMembers, "|cff00ff00IsInRaid:|r", isInRaid, "|cff00ff00IsInGroup:|r", isInGroup)
 
     if IsInRaid() then
         if Cell.vars.groupType ~= "raid" then
@@ -821,6 +822,16 @@ function eventFrame:PLAYER_TALENT_UPDATE()
     CheckDivineAegis()
     -- UpdateSpecVars(true)
     F.UpdateClickCastingProfileLabel()
+end
+
+function eventFrame:PLAYER_ENTERING_WORLD()
+    -- On reload/login, force a roster refresh if we're already grouped so names/indicators populate.
+    if IsInRaid() or IsInGroup() then
+        -- Run twice (early and after a short delay) to catch late unit name resolution.
+        F.Debug("PLAYER_ENTERING_WORLD: grouped; scheduling roster refresh x2")
+        C_Timer.After(0.1, function() eventFrame:GROUP_ROSTER_UPDATE() end)
+        C_Timer.After(0.5, function() eventFrame:GROUP_ROSTER_UPDATE() end)
+    end
 end
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)

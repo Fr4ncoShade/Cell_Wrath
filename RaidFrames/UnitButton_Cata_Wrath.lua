@@ -214,6 +214,7 @@ end
 
 local function HandleIndicators(b)
     b._indicatorsReady = nil
+    b._loggedPendingUpdate = nil
 
     if b._waitingForIndicatorCreation then
         b._waitingForIndicatorCreation = nil
@@ -432,6 +433,7 @@ local function HandleIndicators(b)
     B.UpdatePixelPerfect(b, true)
 
     b._indicatorsReady = true
+    F.Debug("Indicators ready for", b:GetName(), "guid", b.states.guid or "nil")
 end
 
 -------------------------------------------------
@@ -494,6 +496,7 @@ local function AddToInitQueue(b)
     b._status = WAITING_FOR_INIT
     b._config = Cell.vars.currentLayoutTable["indicators"]
     queue[b] = true
+    F.Debug("InitQueue +", b:GetName(), "unit", b.states.unit or "nil")
 end
 
 local function AddToUpdateQueue(b)
@@ -501,6 +504,7 @@ local function AddToUpdateQueue(b)
     b._indicatorsReady = nil
     b._status = WAITING_FOR_UPDATE
     queue[b] = true
+    F.Debug("UpdateQueue +", b:GetName(), "unit", b.states.unit or "nil")
 end
 
 -------------------------------------------------
@@ -3027,6 +3031,10 @@ local function UnitButton_OnTick(self)
     if self._updateRequired and self._indicatorsReady then
         self._updateRequired = nil
         UnitButton_UpdateAll(self)
+        self._loggedPendingUpdate = nil
+    elseif self._updateRequired and not self._loggedPendingUpdate then
+        self._loggedPendingUpdate = true
+        F.Debug("Pending update but indicators not ready:", self:GetName(), "unit", self.states.unit or "nil", "guid", self.states.guid or "nil")
     end
 
     --! for Xtarget

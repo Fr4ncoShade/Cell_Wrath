@@ -1154,6 +1154,20 @@ if not C_Item then
 end
 
 -------------------------------------------------
+-- UnitAura safety wrapper for addons that pass bad params
+-- WotLK errors on nil/empty unit or nil index/name; retail is lenient.
+-------------------------------------------------
+if not _G._CellOriginalUnitAura then
+    _G._CellOriginalUnitAura = UnitAura
+    function UnitAura(unit, indexOrName, ...)
+        if not unit or unit == "" or indexOrName == nil then
+            return
+        end
+        return _G._CellOriginalUnitAura(unit, indexOrName, ...)
+    end
+end
+
+-------------------------------------------------
 -- UnitBuff/UnitDebuff wrappers for Cell (NOT global overrides)
 -- WotLK returns: name, rank, icon, count, debuffType, duration, expirationTime, caster, isStealable, shouldConsolidate, spellId
 -- Retail returns: name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, ...
@@ -1731,6 +1745,14 @@ end
 do
     -- Track frames that have registered GROUP_ROSTER_UPDATE handlers
     local groupRosterFrames = setmetatable({}, {__mode = "k"}) -- weak keys
+    local function ProxyDebug(...)
+        if _G.Cell and _G.Cell.funcs and _G.Cell.funcs.Debug then
+            _G.Cell.funcs.Debug(...)
+        else
+            -- Fallback to plain print for early-load cases
+            print("|cFF33CC33[Cell RosterProxy]|r", ...)
+        end
+    end
 
     -- The proxy frame that listens to actual WotLK events
     local proxyFrame = CreateFrame("Frame", "CellGroupRosterProxy")
@@ -1739,10 +1761,10 @@ do
     proxyFrame:RegisterEvent("PARTY_MEMBER_ENABLE")
     proxyFrame:RegisterEvent("PARTY_MEMBER_DISABLE")
 
+    local lastFireTime = 0
     proxyFrame:SetScript("OnEvent", function(self, event)
 
         -- Debounce to avoid firing multiple times per frame
-        local lastFireTime = 0
         local DEBOUNCE_TIME = 0.1
 
         local now = GetTime()
@@ -1750,10 +1772,13 @@ do
             return
         end
         lastFireTime = now
+        local count = 0
+        for _ in pairs(groupRosterFrames) do count = count + 1 end
+        ProxyDebug("RosterProxy fired from", event, "dispatching to", tostring(count), "frames")
 
         -- Fire GROUP_ROSTER_UPDATE on all registered frames
         for frame in pairs(groupRosterFrames) do
-            if frame and frame:IsVisible() then
+            if frame then
                 local handler = frame:GetScript("OnEvent")
                 if handler then
                     -- Use pcall to prevent errors from breaking the loop
@@ -1767,6 +1792,7 @@ do
     function Cell_RegisterForGroupRosterProxy(frame)
         if frame then
             groupRosterFrames[frame] = true
+            ProxyDebug("Registered frame for roster proxy:", frame:GetName() or tostring(frame))
         end
     end
     
@@ -1774,6 +1800,7 @@ do
     function Cell_UnregisterFromGroupRosterProxy(frame)
         if frame then
             groupRosterFrames[frame] = nil
+            ProxyDebug("Unregistered frame from roster proxy:", frame:GetName() or tostring(frame))
         end
     end
     
@@ -1786,6 +1813,38 @@ do
                     pcall(handler, frame, "GROUP_ROSTER_UPDATE")
                 end
             end
+        end
+    end
+
+    -- Automatically register frames that call RegisterEvent("GROUP_ROSTER_UPDATE")
+    do
+        local mt = getmetatable(proxyFrame)
+        mt = mt and mt.__index
+        if mt and mt.RegisterEvent and not mt._CellGroupRosterHook then
+            local origRegisterEvent = mt.RegisterEvent
+            local origUnregisterEvent = mt.UnregisterEvent
+            local origUnregisterAllEvents = mt.UnregisterAllEvents
+
+            function mt:RegisterEvent(event, ...)
+                if event == "GROUP_ROSTER_UPDATE" then
+                    Cell_RegisterForGroupRosterProxy(self)
+                end
+                return origRegisterEvent(self, event, ...)
+            end
+
+            function mt:UnregisterEvent(event)
+                if event == "GROUP_ROSTER_UPDATE" then
+                    Cell_UnregisterFromGroupRosterProxy(self)
+                end
+                return origUnregisterEvent(self, event)
+            end
+
+            function mt:UnregisterAllEvents()
+                Cell_UnregisterFromGroupRosterProxy(self)
+                return origUnregisterAllEvents(self)
+            end
+
+            mt._CellGroupRosterHook = true
         end
     end
 end
