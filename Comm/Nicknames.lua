@@ -10,8 +10,9 @@ local Comm = LibStub:GetLibrary("AceComm-3.0")
 -----------------------------------------
 local sendChannel
 local function UpdateSendChannel()
+    -- 3.3.5a lacks INSTANCE_CHAT for addon traffic; use group/raid instead.
     if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        sendChannel = "INSTANCE_CHAT"
+        sendChannel = IsInRaid() and "RAID" or "PARTY"
     elseif IsInRaid() then
         sendChannel = "RAID"
     else

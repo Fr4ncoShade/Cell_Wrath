@@ -42,8 +42,9 @@ end
 -----------------------------------------
 local sendChannel
 local function UpdateSendChannel()
+    -- 3.3.5a has no INSTANCE_CHAT addon channel; fall back to RAID/PARTY so AceComm doesn't error.
     if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        sendChannel = "INSTANCE_CHAT"
+        sendChannel = IsInRaid() and "RAID" or "PARTY"
     elseif IsInRaid() then
         sendChannel = "RAID"
     else
