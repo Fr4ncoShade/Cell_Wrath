@@ -11,11 +11,7 @@ local header = CreateFrame("Frame", "CellPartyFrameHeader", partyFrame, "SecureG
 header:SetAttribute("template", "CellUnitButtonTemplate")
 
 function header:UpdateButtonUnit(bName, unit)
-    -- F.Debug("|cff00ffff=== header:UpdateButtonUnit called ===")
-    -- F.Debug("|cff00ffffButtonName:|r", bName, "|cff00ffffUnit:|r", unit or "NIL")
-
     if not unit then
-        -- F.Debug("|cff00ffffERROR: Unit is nil, returning early")
         return
     end
 
@@ -28,7 +24,6 @@ function header:UpdateButtonUnit(bName, unit)
         petUnit = string.gsub(unit, "party", "partypet")
     end
 
-    -- F.Debug("|cff00ffffRegistering button:|r", bName, "|cff00fffffor unit:|r", unit, "|cff00ffffpetUnit:|r", petUnit)
     Cell.unitButtons.party.units[unit] = _G[bName]
     Cell.unitButtons.party.units[petUnit] = _G[bName].petButton
 end
@@ -68,16 +63,21 @@ header:SetAttribute("xOffset", 0)
 header:SetAttribute("yOffset", -1)
 header:SetAttribute("maxColumns", 1)
 header:SetAttribute("unitsPerColumn", 5)
-header:SetAttribute("showPlayer", true)
-header:SetAttribute("showParty", true)
+--! WotLK 3.3.5a: DON'T set showPlayer/showParty - they trigger auto button creation!
+--! We create buttons manually below, so these must be commented out to avoid duplicate buttons
+-- header:SetAttribute("showPlayer", true)
+-- header:SetAttribute("showParty", true)
 
 --! WotLK 3.3.5a: SecureGroupHeaderTemplate doesn't create buttons automatically in WotLK
 --! Manually create 5 buttons for party members (player + 4 party members)
+--! Store them in a separate array to prevent auto-created buttons from overwriting
+local manualButtons = {}
 for i = 1, 5 do
     local buttonName = "CellPartyFrameMember" .. i
     local playerButton = CreateFrame("Button", buttonName, header, "CellUnitButtonTemplate,SecureUnitButtonTemplate")
     playerButton:SetID(i)
-    header[i] = playerButton
+    manualButtons[i] = playerButton  -- Store in our own array
+    -- DO NOT set header[i] here - it gets overwritten by auto-created buttons!
 
     local unit
     if i == 1 then
@@ -119,7 +119,7 @@ header:Show()
 -- Ensure buttons know their unit attributes (OnAttributeChanged only fires on changes)
 local function ForceSyncPartyButtons()
     for i = 1, 5 do
-        local button = header[i]
+        local button = manualButtons[i]
         if button then
             local unit = button:GetAttribute("unit")
             if unit and button:GetScript("OnAttributeChanged") then
@@ -147,7 +147,7 @@ end
 C_Timer.After(0.1, function()
     if not header.UpdateButtonUnit then return end
     for i = 1, 5 do
-        local button = header[i]
+        local button = manualButtons[i]
         if button then
             local unit = button:GetAttribute("unit")
             if unit then
@@ -195,14 +195,14 @@ local function PartyFrame_UpdateLayout(layout, which)
     --! WotLK 3.3.5a: Re-register buttons with unit watch when layout updates
     if not which then
         for i = 1, 5 do
-            if header[i] then
-                local unit = header[i]:GetAttribute("unit")
+            if manualButtons[i] then
+                local unit = manualButtons[i]:GetAttribute("unit")
                 if unit then
                     -- Re-register unit watch to ensure button visibility
-                    RegisterUnitWatch(header[i])
+                    RegisterUnitWatch(manualButtons[i])
                     -- Update button unit registration
                     if header.UpdateButtonUnit then
-                        header:UpdateButtonUnit(header[i]:GetName(), unit)
+                        header:UpdateButtonUnit(manualButtons[i]:GetName(), unit)
                     end
                 end
             end
@@ -280,28 +280,28 @@ local function PartyFrame_UpdateLayout(layout, which)
         --! WotLK 3.3.5a: SecureGroupHeaderTemplate doesn't position buttons automatically in WotLK
         --! Manually position each button
         for j = 1, 5 do
-            if header[j] then
-                header[j]:ClearAllPoints()
+            if manualButtons[j] then
+                manualButtons[j]:ClearAllPoints()
 
                 if j == 1 then
                     -- First button anchors its corner to header
-                    header[j]:SetPoint(point, header, headerPoint, 0, 0)
+                    manualButtons[j]:SetPoint(point, header, headerPoint, 0, 0)
                 else
                     -- Subsequent buttons anchor to previous button
                     if orientation == "vertical" then
-                        header[j]:SetPoint(point, header[j-1], playerAnchorPoint, 0, P.Scale(playerSpacing))
+                        manualButtons[j]:SetPoint(point, manualButtons[j-1], playerAnchorPoint, 0, P.Scale(playerSpacing))
                     else
-                        header[j]:SetPoint(point, header[j-1], playerAnchorPoint, P.Scale(playerSpacing), 0)
+                        manualButtons[j]:SetPoint(point, manualButtons[j-1], playerAnchorPoint, P.Scale(playerSpacing), 0)
                     end
                 end
 
                 -- Position pet button
-                if header[j].petButton then
-                    header[j].petButton:ClearAllPoints()
+                if manualButtons[j].petButton then
+                    manualButtons[j].petButton:ClearAllPoints()
                     if orientation == "vertical" then
-                        header[j].petButton:SetPoint(point, header[j], petAnchorPoint, P.Scale(petSpacing), 0)
+                        manualButtons[j].petButton:SetPoint(point, manualButtons[j], petAnchorPoint, P.Scale(petSpacing), 0)
                     else
-                        header[j].petButton:SetPoint(point, header[j], petAnchorPoint, 0, P.Scale(petSpacing))
+                        manualButtons[j].petButton:SetPoint(point, manualButtons[j], petAnchorPoint, 0, P.Scale(petSpacing))
                     end
                 end
             end
@@ -311,7 +311,7 @@ local function PartyFrame_UpdateLayout(layout, which)
     end
 
     if not which or strfind(which, "size$") or strfind(which, "power$") or which == "barOrientation" or which == "powerFilter" then
-        for i, playerButton in ipairs(header) do
+        for i, playerButton in ipairs(manualButtons) do
             local petButton = playerButton.petButton
 
             if not which or strfind(which, "size$") then
@@ -352,11 +352,11 @@ local function PartyFrame_UpdateLayout(layout, which)
         header:SetAttribute("showPartyPets", layout["pet"]["partyEnabled"])
         header:SetAttribute("partyDetached", layout["pet"]["partyDetached"])
         if layout["pet"]["partyEnabled"] and not layout["pet"]["partyDetached"] then
-            for i, playerButton in ipairs(header) do
+            for i, playerButton in ipairs(manualButtons) do
                 RegisterUnitWatch(playerButton.petButton)
             end
         else
-            for i, playerButton in ipairs(header) do
+            for i, playerButton in ipairs(manualButtons) do
                 UnregisterUnitWatch(playerButton.petButton)
                 playerButton.petButton:Hide()
             end
@@ -377,7 +377,13 @@ local function PartyFrame_UpdateLayout(layout, which)
     end
 
     if not which or which == "hideSelf" then
-        header:SetAttribute("showPlayer", not layout["main"]["hideSelf"])
+        --! WotLK 3.3.5a: Don't use showPlayer attribute - it triggers auto button creation
+        --! Instead, manually show/hide the first button (player button)
+        if layout["main"]["hideSelf"] then
+            manualButtons[1]:Hide()
+        else
+            manualButtons[1]:Show()
+        end
     end
 
     -- Debug final button states
@@ -435,7 +441,7 @@ local function PartyFrame_GroupTypeChanged(groupType)
                 end
                 -- Force update all party buttons
                 for i = 1, 5 do
-                    local button = header[i]
+                    local button = manualButtons[i]
                     if button then
                         if button:IsVisible() then
                             button._updateRequired = 1

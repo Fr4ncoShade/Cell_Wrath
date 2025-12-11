@@ -2865,6 +2865,7 @@ Cell.RegisterCallback("LeaveInstance", "UnitButton_LeaveInstance", EnterLeaveIns
 
 local function UnitButton_OnAttributeChanged(self, name, value)
     if name == "unit" and not self:GetAttribute("oldUnit") then
+        Cell.funcs.Debug("|cffaaaa00[OnAttributeChanged] name:|r", name, "|cffaaaa00value:|r", value, "|cffaaaa00self.states.unit:|r", self.states.unit, "|cffaaaa00Button:|r", self:GetName())
         if not value or value ~= self.states.unit then
             -- NOTE: when unitId for this button changes
             if self.__unitGuid then -- self.__unitGuid is deleted when hide
@@ -2877,12 +2878,19 @@ local function UnitButton_OnAttributeChanged(self, name, value)
                 self.__unitName = nil
             end
             wipe(self.states)
+        else
+            Cell.funcs.Debug("|cffaaaa00[OnAttributeChanged] SKIPPED - value equals self.states.unit:|r", value)
         end
 
         if type(value) == "string" then
             self.states.unit = value
             self.states.displayedUnit = value
             if string.find(value, "raid") then Cell.unitButtons.raid.units[value] = self end
+            -- WotLK 3.3.5a: Also populate party units (player, party1-4, pet, partypet1-4)
+            if string.find(value, "party") or value == "player" or value == "pet" or string.find(value, "partypet") then
+                Cell.unitButtons.party.units[value] = self
+                Cell.funcs.Debug("|cff00ffff[OnAttributeChanged] Populated party unit:|r", value, "Button:", self:GetName())
+            end
             -- for omnicd
             if string.match(value, "raid%d") then
                 local i = string.match(value, "%d")

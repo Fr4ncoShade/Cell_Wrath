@@ -41,8 +41,8 @@ Cell.MIN_INDICATORS_VERSION = 246
 Cell.MIN_DEBUFFS_VERSION = 246
 
 --[==[@debug@
-local debugMode = true
 --@end-debug@]==]
+-- local debugMode = true
 function F.Debug(arg, ...)
     if debugMode then
         if type(arg) == "string" or type(arg) == "number" then
@@ -80,11 +80,9 @@ end)
 
 function F.UpdateLayout(layoutGroupType)
     if InCombatLockdown() then
-        F.Debug("|cFF7CFC00F.UpdateLayout(\""..layoutGroupType.."\") DELAYED")
         delayedLayoutGroupType = layoutGroupType
         delayedFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     else
-        F.Debug("|cFF7CFC00F.UpdateLayout(\""..layoutGroupType.."\")")
 
         Cell.vars.layoutAutoSwitch = CellCharacterDB["layoutAutoSwitch"][Cell.vars.activeTalentGroup]
 
@@ -536,12 +534,6 @@ Cell.vars.raidSetup = {
 }
 
 function eventFrame:GROUP_ROSTER_UPDATE()
-    F.Debug("|cff00ff00=== GROUP_ROSTER_UPDATE FIRED ===")
-    local numGroupMembers = GetNumGroupMembers()
-    local isInRaid = IsInRaid()
-    local isInGroup = IsInGroup()
-    F.Debug("|cff00ff00NumGroupMembers:|r", numGroupMembers, "|cff00ff00IsInRaid:|r", isInRaid, "|cff00ff00IsInGroup:|r", isInGroup)
-
     if IsInRaid() then
         if Cell.vars.groupType ~= "raid" then
             Cell.vars.groupType = "raid"
@@ -636,20 +628,16 @@ function eventFrame:GROUP_ROSTER_UPDATE()
         Cell.vars.hasPermission = F.HasPermission()
         Cell.vars.hasPartyMarkPermission = F.HasPermission(true)
         Cell.Fire("PermissionChanged")
-        F.Debug("|cffbb00bbPermissionChanged")
     end
 end
 
 local inInstance
 function eventFrame:PLAYER_ENTERING_WORLD()
-    F.Debug("|cffbbbbbb=== PLAYER_ENTERING_WORLD ===")
-
     local isIn, iType = IsInInstance()
     instanceType = iType
     Cell.vars.raidType = nil
 
     if isIn then
-        F.Debug("|cffff1111*** Entered Instance:|r", iType)
         PreUpdateLayout()
         inInstance = true
 
@@ -675,12 +663,10 @@ function eventFrame:PLAYER_ENTERING_WORLD()
         end
 
     elseif inInstance then -- left insntance
-        F.Debug("|cffff1111*** Left Instance|r")
         PreUpdateLayout()
         inInstance = false
 
         if not InCombatLockdown() and not UnitAffectingCombat("player") then
-            F.Debug("|cffbbbbbb--- LeaveInstance: |cffff7777collectgarbage")
             collectgarbage("collect")
         end
     end
@@ -776,7 +762,6 @@ end
 
 local function UpdatePixels()
     if not InCombatLockdown() then
-        F.Debug("UI_SCALE_CHANGED: ", UIParent:GetScale(), CellParent:GetEffectiveScale())
         Cell.Fire("UpdatePixelPerfect")
         Cell.Fire("UpdateAppearance", "scale")
     end
@@ -828,7 +813,6 @@ function eventFrame:PLAYER_ENTERING_WORLD()
     -- On reload/login, force a roster refresh if we're already grouped so names/indicators populate.
     if IsInRaid() or IsInGroup() then
         -- Run twice (early and after a short delay) to catch late unit name resolution.
-        F.Debug("PLAYER_ENTERING_WORLD: grouped; scheduling roster refresh x2")
         C_Timer.After(0.1, function() eventFrame:GROUP_ROSTER_UPDATE() end)
         C_Timer.After(0.5, function() eventFrame:GROUP_ROSTER_UPDATE() end)
         -- And force party button sync/update shortly after (covers solo/party)
