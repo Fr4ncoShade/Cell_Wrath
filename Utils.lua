@@ -63,9 +63,8 @@ do
     -- DRUID = 11,
     -- DEMONHUNTER = 12,
     -- EVOKER = 13,
-    --! GetNumClasses returns the highest class ID (NOT IN CLASSIC)
-    local highestClassID = GetNumClasses()
-    if highestClassID < 11 then highestClassID = 11 end
+    --! WotLK: Cap at 11 (DRUID is highest class in WotLK)
+    local highestClassID = 11
     for i = 1, highestClassID do
         local classFile, classID = select(2, GetClassInfo(i))
         if classFile and classID == i then

@@ -5068,7 +5068,7 @@ end
 -------------------------------------------------
 -- CreateSetting_BuiltIns
 -------------------------------------------------
-local classOrder = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "EVOKER", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR", "UNCATEGORIZED"}
+local classOrder = {"DEATHKNIGHT", "DRUID", "HUNTER", "MAGE", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR", "UNCATEGORIZED"}
 local classFrames = {}
 local spellButtons = {}
 local buttonIndex = 1
@@ -6519,14 +6519,12 @@ local function CreateSetting_IconStyle(parent)
     return widget
 end
 
+-- WotLK: Only classes available in Wrath of the Lich King
 local CLASS_ROLES = {
     ["DEATHKNIGHT"] = {"TANK", "DAMAGER"},
-    ["DEMONHUNTER"] = {"TANK", "DAMAGER"},
     ["DRUID"] = {"TANK", "HEALER", "DAMAGER"},
-    ["EVOKER"] = {"HEALER", "DAMAGER"},
     ["HUNTER"] = {"DAMAGER"},
     ["MAGE"] = {"DAMAGER"},
-    ["MONK"] = {"TANK", "HEALER", "DAMAGER"},
     ["PALADIN"] = {"TANK", "HEALER", "DAMAGER"},
     ["PRIEST"] = {"HEALER", "DAMAGER"},
     ["ROGUE"] = {"DAMAGER"},
@@ -6623,13 +6621,17 @@ local function CreateSetting_RoleFilters(parent)
 
         local last
         for class in F.IterateClasses() do
-            widget.filters[class] = CreateRoleFilter(widget, class, Cell.isVanilla and {"TANK", "HEALER", "DAMAGER"} or CLASS_ROLES[class])
-            if last then
-                widget.filters[class]:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, -5)
-            else
-                widget.filters[class]:SetPoint("TOPLEFT", 5, -5)
+            -- Only create filters for classes that exist in CLASS_ROLES (WotLK classes only)
+            local roles = Cell.isVanilla and {"TANK", "HEALER", "DAMAGER"} or CLASS_ROLES[class]
+            if roles then
+                widget.filters[class] = CreateRoleFilter(widget, class, roles)
+                if last then
+                    widget.filters[class]:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, -5)
+                else
+                    widget.filters[class]:SetPoint("TOPLEFT", 5, -5)
+                end
+                last = widget.filters[class]
             end
-            last = widget.filters[class]
         end
 
         for _, class in pairs({"PET", "VEHICLE", "NPC"}) do
@@ -6650,7 +6652,10 @@ local function CreateSetting_RoleFilters(parent)
         function widget:SetDBValue(settings)
             widget.settingsTable = settings
             for class, filter in pairs(widget.filters) do
-                filter:Load(settings[class])
+                -- Only load settings for classes that have filters (WotLK classes)
+                if settings[class] then
+                    filter:Load(settings[class])
+                end
             end
         end
     else
@@ -6745,7 +6750,10 @@ local function CreateSetting_ClassFilters(parent)
         function widget:SetDBValue(settings)
             widget.settingsTable = settings
             for class, filter in pairs(widget.filters) do
-                filter:Load(settings[class])
+                -- Only load settings for classes that have filters (WotLK classes)
+                if settings[class] then
+                    filter:Load(settings[class])
+                end
             end
         end
     else
