@@ -1086,6 +1086,7 @@ local function UnitButton_UpdateDebuffs(self)
     I.ResetCustomIndicators(self, "debuff")
 
     local startIndex, raidDebuffsFound, wsFound = 1
+    local ccFound = 1
     local glowType, glowOptions
     local refreshing = false
 
@@ -1165,6 +1166,13 @@ local function UnitButton_UpdateDebuffs(self)
                 self.indicators.powerWordShield:SetWeakenedSoulCooldown(expirationTime - duration, duration, source == "player")
             end
 
+            -- crowdControls
+            if enabledIndicators["crowdControls"] and I.IsCrowdControls(name, spellId) and ccFound <= indicatorNums["crowdControls"] then
+                -- start, duration, debuffType, texture, count, refreshing
+                self.indicators.crowdControls[ccFound]:SetCooldown(expirationTime - duration, duration, debuffType, icon, count, refreshing)
+                ccFound = ccFound + 1
+            end
+
             -- BG orbs
             -- if spellId == 121164 then
             --     self.states.BGOrb = "blue"
@@ -1180,6 +1188,9 @@ local function UnitButton_UpdateDebuffs(self)
             -- end
         end
     end
+
+    -- update crowdControls
+    self.indicators.crowdControls:UpdateSize(ccFound - 1)
 
     -- update raid debuffs
     if raidDebuffsFound then
@@ -4091,6 +4102,7 @@ function CellUnitButton_OnLoad(button)
     I.CreateHealthThresholds(button)
     I.CreatePowerWordShield(button)
     U.CreateSpellRequestIcon(button)
+    I.CreateCrowdControls(button)
     U.CreateDispelRequestText(button)
 
     button._waitingForIndicatorCreation = true

@@ -769,6 +769,7 @@ function eventFrame:PLAYER_LOGIN()
     I.UpdateAoEHealings(CellDB["aoeHealings"])
     I.UpdateDefensives(CellDB["defensives"])
     I.UpdateExternals(CellDB["externals"])
+    I.UpdateCrowdControls(CellDB["crowdControls"])
     -- update pixel perfect
     Cell.Fire("UpdatePixelPerfect")
     -- LibHealComm
