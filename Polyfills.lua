@@ -1879,28 +1879,21 @@ do
         local mt = sample and getmetatable(sample)
         mt = mt and mt.__index
         if mt and mt.RegisterEvent and not mt._CellGroupRosterHook then
-            local origRegisterEvent = mt.RegisterEvent
-            local origUnregisterEvent = mt.UnregisterEvent
-            local origUnregisterAllEvents = mt.UnregisterAllEvents
-
-            function mt:RegisterEvent(event, ...)
+            hooksecurefunc(mt, "RegisterEvent", function(self, event)
                 if event == "GROUP_ROSTER_UPDATE" then
                     Cell_RegisterForGroupRosterProxy(self)
                 end
-                return origRegisterEvent(self, event, ...)
-            end
+            end)
 
-            function mt:UnregisterEvent(event)
+            hooksecurefunc(mt, "UnregisterEvent", function(self, event)
                 if event == "GROUP_ROSTER_UPDATE" then
                     Cell_UnregisterFromGroupRosterProxy(self)
                 end
-                return origUnregisterEvent(self, event)
-            end
+            end)
 
-            function mt:UnregisterAllEvents()
+            hooksecurefunc(mt, "UnregisterAllEvents", function(self)
                 Cell_UnregisterFromGroupRosterProxy(self)
-                return origUnregisterAllEvents(self)
-            end
+            end)
 
             mt._CellGroupRosterHook = true
         end
