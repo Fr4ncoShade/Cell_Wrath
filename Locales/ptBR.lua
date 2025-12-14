@@ -1,6 +1,6 @@
-if not LOCALE_ptBR then return end
-
-local L = select( 2, ...).L
+local addonName, ns = ...
+ns.RegisterLocale("ptBR", function()
+    local L = ns.L
 
 L["%s in Utilities must be enabled to make this indicator work."] = "%s em Utilidades deve estar habilitado para que este indicador funcione."
 L["%s is required"] = "%s é necessário."
@@ -720,3 +720,4 @@ L["You can config debuffs in %s"] = "Você pode configurar debuffs em %s"
 L["You can move it in Preview mode"] = "Você pode movê-lo no modo Preview"
 L["You can't do that while in combat."] = "Você não pode fazer isso em combate."
 L["You don't have permission to do this"] = "Você não tem permissão pra fazer isso."
+end)

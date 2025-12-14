@@ -1,6 +1,6 @@
-if not LOCALE_frFR then return end
-
-local L = select( 2, ...).L
+local addonName, ns = ...
+ns.RegisterLocale("frFR", function()
+    local L = ns.L
 
 L["%s in Utilities must be enabled to make this indicator work."] = "%s dans les utilitaires doit être activé pour que cet indicateur fonctionne."
 L["%s is required"] = "%s est requis"
@@ -1007,3 +1007,4 @@ L["You can config debuffs in %s"] = "Vous pouvez configurer des affaiblissements
 L["You can move it in Preview mode"] = "Vous pouvez le déplacer en mode Aperçu."
 L["You can't do that while in combat."] = "Vous ne pouvez pas faire cela pendant le combat."
 L["You don't have permission to do this"] = "Vous n'avez pas la permission de faire cela."
+end)

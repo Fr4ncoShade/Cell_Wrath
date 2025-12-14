@@ -1683,3 +1683,75 @@ select(2, ...).L = setmetatable({
         end
     end
 })
+
+---------------------------------------------------------------------
+-- Locale Management (Merged from Loader.lua)
+---------------------------------------------------------------------
+
+-- Use the addon namespace table which becomes _G.Cell in Core_Wrath.lua
+local addonName, ns = ...
+
+-- Locale Registry
+ns.localeLoaders = {}
+function ns.RegisterLocale(locale, func)
+    ns.localeLoaders[locale] = func
+end
+
+function ns.LoadUserLocale()
+    local locale = nil
+    if CellDB and CellDB["general"] then
+        locale = CellDB["general"]["locale"]
+    end
+    
+    -- Default to client locale if not set or nil (Auto)
+    locale = locale or GetLocale()
+
+    -- 1. Always run enUS first (base)
+    -- enUS is ALREADY loaded immediately by this file (enUS.lua logic runs on load)
+    
+    -- 2. Run target locale if exists and not enUS (since enUS is base)
+    if locale ~= "enUS" and ns.localeLoaders[locale] then
+        ns.localeLoaders[locale]()
+    end
+end
+
+-- Available locales with display names
+ns.availableLocales = {
+    { code = nil,    name = "Auto (Client)" },
+    { code = "enUS", name = "English" },
+    { code = "deDE", name = "Deutsch (German)" },
+    { code = "esES", name = "Español (Spanish)" },
+    { code = "esMX", name = "Español Mexicano" },
+    { code = "frFR", name = "Français (French)" },
+    { code = "itIT", name = "Italiano (Italian)" },
+    { code = "koKR", name = "한국어 (Korean)" },
+    { code = "ptBR", name = "Português (Brazilian)" },
+    { code = "ruRU", name = "Русский (Russian)" },
+    { code = "zhCN", name = "简体中文 (Simplified Chinese)" },
+    { code = "zhTW", name = "繁體中文 (Traditional Chinese)" },
+}
+
+-- UI Helper: Get the current selected locale (for Options dropdown)
+function ns.GetCurrentLocale()
+    if CellDB and CellDB["general"] and CellDB["general"]["locale"] then
+        return CellDB["general"]["locale"]
+    end
+    return GetLocale()
+end
+
+-- UI Helper: Set the locale (requires reload)
+function ns.SetLocale(locale)
+    if CellDB and CellDB["general"] then
+        CellDB["general"]["locale"] = locale
+    end
+end
+
+-- UI Helper: Get Display Name
+function ns.GetLocaleDisplayName(localeCode)
+    for _, loc in ipairs(ns.availableLocales) do
+        if loc.code == localeCode then
+            return loc.name
+        end
+    end
+    return localeCode or "Auto (Client)"
+end

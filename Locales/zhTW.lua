@@ -1,6 +1,6 @@
-if not LOCALE_zhTW then return end
-
-local L = select( 2, ...).L
+local addonName, ns = ...
+ns.RegisterLocale("zhTW", function()
+    local L = ns.L
 
 L["%s in Utilities must be enabled to make this indicator work."] = "要使用此指示器，必須先啟用工具標籤頁面中的 %s 功能。"
 L["%s is required"] = "需要%s"
@@ -724,3 +724,4 @@ L["You can config debuffs in %s"] = "你可以在 %s 中設定減益法術"
 L["You can move it in Preview mode"] = "可以在 \"預覽\" 模式中移動它"
 L["You can't do that while in combat."] = "你不可以在戰鬥中這麼做。"
 L["You don't have permission to do this"] = "你沒有權限這樣做"
+end)

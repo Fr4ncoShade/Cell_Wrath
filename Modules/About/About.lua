@@ -540,6 +540,46 @@ local function CreateImportExportPane()
 end
 
 -------------------------------------------------
+-- language selector
+-------------------------------------------------
+local function CreateLanguagePane()
+    local langPane = Cell.CreateTitledPane(aboutTab, L["Language"] or "Language", 422, 50)
+    langPane:SetPoint("TOPLEFT", 5, -555)
+
+    -- Build dropdown items from available locales
+    local items = {}
+    for _, loc in ipairs(Cell.availableLocales) do
+        table.insert(items, {
+            ["text"] = loc.name,
+            ["value"] = loc.code,
+            ["onClick"] = function()
+                local currentSetting = CellDB["general"]["locale"]
+                local newSetting = loc.code
+                
+                -- Only prompt if actually changing
+                if currentSetting ~= newSetting then
+                    Cell.SetLocale(newSetting)
+                    
+                    -- Show reload prompt
+                    local popup = StaticPopup_Show("CELL_RELOAD_UI", L["A UI reload is required.\nDo it now?"] or "A UI reload is required.\nDo it now?")
+                end
+            end,
+        })
+    end
+
+    local langDropdown = Cell.CreateDropdown(langPane, 200)
+    langDropdown:SetPoint("TOPLEFT", 5, -27)
+    langDropdown:SetItems(items)
+
+    -- Set current value
+    local currentLocale = CellDB["general"]["locale"]
+    langDropdown:SetSelectedValue(currentLocale)
+
+    -- Store reference for updates
+    langPane.dropdown = langDropdown
+end
+
+-------------------------------------------------
 -- functions
 -------------------------------------------------
 local init
@@ -555,6 +595,7 @@ local function ShowTab(tab)
             -- CreateSupportersPane()
             CreateLinksPane()
             CreateImportExportPane()
+            CreateLanguagePane()
         end
         aboutTab:Show()
         descriptionPane:SetTitle("Cell "..Cell.version)

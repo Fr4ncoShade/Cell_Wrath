@@ -1,6 +1,6 @@
-if not LOCALE_deDE then return end
-
-local L = select( 2, ...).L
+local addonName, ns = ...
+ns.RegisterLocale("deDE", function()
+    local L = ns.L
 
 L["%s in Utilities must be enabled to make this indicator work."] = "%s in Utilities muss aktiviert sein, damit dieser Indikator funktioniert."
 L["%s is required"] = "%s ist erforderlich"
@@ -712,4 +712,4 @@ L["You"] = "Du"
 L["You can config debuffs in %s"] = "Du kannst Schwächungszauber in %s konfigurieren"
 L["You can move it in Preview mode"] = "Du kannst es im Vorschau-Modus verschieben"
 L["You can't do that while in combat."] = "Das kann man im Kampf nicht tun."
-L["You don't have permission to do this"] = "Du hasst keine Erlaubnis, das zu tun"
+L["You don't have permission to do this"] = "Du hasst keine Erlaubnis, das zu tun"end)

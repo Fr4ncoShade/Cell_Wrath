@@ -1,6 +1,6 @@
-if not LOCALE_ruRU then return end
-
-local L = select( 2, ...).L
+local addonName, ns = ...
+ns.RegisterLocale("ruRU", function()
+    local L = ns.L
 
 L["%s in Utilities must be enabled to make this indicator work."] = "%s в Утилитах должно быть включено, что бы этот индикатор работал"
 L["%s is required"] = "%s требуется"
@@ -715,3 +715,4 @@ L["You can config debuffs in %s"] = "Вы можете настроить деб
 L["You can move it in Preview mode"] = "Можно двигать в режиме Предпросмотра"
 L["You can't do that while in combat."] = "Вы не можете сделать это в бою"
 L["You don't have permission to do this"] = "У вас нет разрешения сделать это"
+end)

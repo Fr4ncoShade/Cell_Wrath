@@ -1,6 +1,6 @@
-if not LOCALE_koKR then return end
-
-local L = select( 2, ...).L
+local addonName, ns = ...
+ns.RegisterLocale("koKR", function()
+    local L = ns.L
 
 L["%s in Utilities must be enabled to make this indicator work."] = "이 표시기가 작동하려면 유틸리티의 %s가 활성화되어 있어야 합니다."
 L["%s is required"] = "%s 필요"
@@ -710,3 +710,4 @@ L["You can config debuffs in %s"] = "%s에서 디버프를 설정할 수 있습�
 L["You can move it in Preview mode"] = "미리보기 모드에서 이동할 수 있습니다."
 L["You can't do that while in combat."] = "전투 중에는 그렇게 할 수 없습니다."
 L["You don't have permission to do this"] = "이 작업을 할 권한이 없습니다."
+end)

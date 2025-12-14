@@ -224,6 +224,15 @@ function eventFrame:ADDON_LOADED(arg1)
                 ["translit"] = false,
             }
         end
+    
+    -- Load user-selected locale (delayed until CellDB is available)
+    if Cell.LoadUserLocale then
+        Cell.LoadUserLocale()
+    end
+        -- Initialize locale setting if missing (for backward compatibility)
+        if CellDB["general"]["locale"] == nil then
+            CellDB["general"]["locale"] = nil -- nil means "Auto (Client)"
+        end
 
         -- nicknames ------------------------------------------------------------------------------
         if type(CellDB["nicknames"]) ~= "table" then
@@ -1125,3 +1134,16 @@ function SlashCmdList.CELL(msg, editbox)
         print(" |cFFFFB5C5/cell reset all|r: "..L["reset all Cell settings"]..".")
     end
 end
+
+StaticPopupDialogs["CELL_RELOAD_UI"] = {
+    text = "%s",
+    button1 = _G.YES,
+    button2 = _G.NO,
+    OnAccept = function()
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+    preferredIndex = 3,
+}
