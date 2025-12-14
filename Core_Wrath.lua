@@ -142,6 +142,7 @@ local function PreUpdateLayout()
     else
         Cell.vars.inBattleground = false
         if Cell.vars.groupType == "solo" then
+
             F.UpdateLayout("solo", true)
         elseif Cell.vars.groupType == "party" then
             F.UpdateLayout("party", true)
@@ -854,169 +855,6 @@ end)
 -------------------------------------------------
 SLASH_CELL1 = "/cell"
 
--- Debug command
-SLASH_CELLDEBUG1 = "/celldebug"
-SlashCmdList["CELLDEBUG"] = function(msg)
-    print("=== CELL DEBUG ===")
-
-    -- Check parent frames
-    local mainFrame = _G["CellMainFrame"]
-    local partyFrame = _G["CellPartyFrame"]
-    local partyHeader = _G["CellPartyFrameHeader"]
-
-    print("Parent Frames:")
-    if mainFrame then
-        print("  MainFrame: EXISTS, IsVisible:", mainFrame:IsVisible(), "IsShown:", mainFrame:IsShown())
-        local x, y = mainFrame:GetCenter()
-        print("    Position (center):", x or "nil", y or "nil")
-        local w, h = mainFrame:GetSize()
-        print("    Size:", w, h)
-    else
-        print("  MainFrame: NOT FOUND")
-    end
-
-    if partyFrame then
-        print("  PartyFrame: EXISTS, IsVisible:", partyFrame:IsVisible(), "IsShown:", partyFrame:IsShown())
-        local x, y = partyFrame:GetCenter()
-        print("    Position (center):", x or "nil", y or "nil")
-    else
-        print("  PartyFrame: NOT FOUND")
-    end
-
-    if partyHeader then
-        print("Party Header: EXISTS")
-        print("  NumButtons (#header):", #partyHeader)
-        print("  IsVisible:", partyHeader:IsVisible(), "IsShown:", partyHeader:IsShown())
-        local x, y = partyHeader:GetCenter()
-        print("  Position (center):", x or "nil", y or "nil")
-        print("  Checking buttons 1-5:")
-        for i = 1, 5 do
-            if partyHeader[i] then
-                local unit = partyHeader[i]:GetAttribute("unit")
-                local w, h = partyHeader[i]:GetSize()
-                local isVis = partyHeader[i]:IsVisible()
-                local isShown = partyHeader[i]:IsShown()
-                local x, y = partyHeader[i]:GetCenter()
-                print("    Button"..i..": Unit:", unit or "NONE", "Size:", w.."x"..h, "Vis:", isVis, "Shown:", isShown)
-                print("      Position:", x or "nil", y or "nil")
-            else
-                print("    Button"..i..": NIL")
-            end
-        end
-    else
-        print("Party Header: NOT FOUND")
-    end
-
-    print("Cell.unitButtons.party.units:")
-    if Cell.unitButtons and Cell.unitButtons.party and Cell.unitButtons.party.units then
-        local count = 0
-        for unit, btn in pairs(Cell.unitButtons.party.units) do
-            print("  "..unit..":", btn:GetName())
-            count = count + 1
-        end
-        if count == 0 then print("  (empty)") end
-    end
-
-    -- Check raid frames
-    local raidFrame = _G["CellRaidFrame"]
-    local combinedHeader = _G["CellRaidFrameHeader0"]
-
-    print("Raid Frames:")
-    if raidFrame then
-        print("  RaidFrame: EXISTS, IsVisible:", raidFrame:IsVisible(), "IsShown:", raidFrame:IsShown())
-        local x, y = raidFrame:GetCenter()
-        print("    Position (center):", x or "nil", y or "nil")
-    else
-        print("  RaidFrame: NOT FOUND")
-    end
-
-    if combinedHeader then
-        print("Combined Raid Header: EXISTS")
-        print("  NumButtons (#combinedHeader):", #combinedHeader)
-        print("  IsVisible:", combinedHeader:IsVisible(), "IsShown:", combinedHeader:IsShown())
-        print("  Checking first 5 buttons:")
-        for i = 1, 5 do
-            if combinedHeader[i] then
-                local unit = combinedHeader[i]:GetAttribute("unit")
-                local w, h = combinedHeader[i]:GetSize()
-                local isVis = combinedHeader[i]:IsVisible()
-                local isShown = combinedHeader[i]:IsShown()
-                local x, y = combinedHeader[i]:GetCenter()
-                print("    Button"..i..": Unit:", unit or "NONE", "Size:", w.."x"..h, "Vis:", isVis, "Shown:", isShown)
-                print("      Position:", x or "nil", y or "nil")
-            else
-                print("    Button"..i..": NIL")
-            end
-        end
-    else
-        print("Combined Raid Header: NOT FOUND")
-    end
-
-    -- Check separated raid headers
-    print("Separated Raid Headers:")
-    for i = 1, 8 do
-        local separatedHeader = _G["CellRaidFrameHeader"..i]
-        if separatedHeader then
-            print("  Group"..i.." Header: EXISTS")
-            print("    NumButtons:", #separatedHeader)
-            print("    IsVisible:", separatedHeader:IsVisible(), "IsShown:", separatedHeader:IsShown())
-            local x, y = separatedHeader:GetCenter()
-            print("    Position (center):", x or "nil", y or "nil")
-            print("    Checking first 3 buttons:")
-            for j = 1, 3 do
-                if separatedHeader[j] then
-                    local unit = separatedHeader[j]:GetAttribute("unit")
-                    local w, h = separatedHeader[j]:GetSize()
-                    local isVis = separatedHeader[j]:IsVisible()
-                    local isShown = separatedHeader[j]:IsShown()
-                    local bx, by = separatedHeader[j]:GetCenter()
-                    print("      Button"..j..": Unit:", unit or "NONE", "Size:", w.."x"..h, "Vis:", isVis, "Shown:", isShown)
-                    print("        Position:", bx or "nil", by or "nil")
-                else
-                    print("      Button"..j..": NIL")
-                end
-            end
-        else
-            print("  Group"..i.." Header: NOT FOUND")
-        end
-    end
-
-    print("Group Info:")
-    print("  IsInGroup:", IsInGroup())
-    print("  IsInRaid:", IsInRaid())
-    print("  NumGroupMembers:", GetNumGroupMembers())
-    print("  Cell.vars.groupType:", Cell.vars.groupType)
-
-    -- Check layout settings
-    if CellDB and CellDB["general"] and CellDB["general"]["layout"] then
-        local layoutName = CellDB["general"]["layout"]
-        print("  Current layout:", layoutName)
-        if CellDB["layouts"] and CellDB["layouts"][layoutName] then
-            local layout = CellDB["layouts"][layoutName]
-            if layout["main"] and layout["main"]["combineGroups"] ~= nil then
-                print("  combineGroups:", layout["main"]["combineGroups"])
-            end
-        end
-    end
-
-    -- Check if group type is out of sync and fix it
-    local actualGroupType
-    if IsInRaid() then
-        actualGroupType = "raid"
-    elseif IsInGroup() then
-        actualGroupType = "party"
-    else
-        actualGroupType = "solo"
-    end
-
-    if Cell.vars.groupType ~= actualGroupType then
-        print("  WARNING: Group type mismatch!")
-        print("  Expected:", actualGroupType)
-        print("  Forcing update to:", actualGroupType)
-        Cell.vars.groupType = actualGroupType
-        Cell.Fire("GroupTypeChanged", actualGroupType)
-    end
-end
 
 function SlashCmdList.CELL(msg, editbox)
     local command, rest = msg:match("^(%S*)%s*(.-)$")
@@ -1147,3 +985,42 @@ StaticPopupDialogs["CELL_RELOAD_UI"] = {
     hideOnEscape = 1,
     preferredIndex = 3,
 }
+
+-------------------------------------------------
+-- Debug Frame Stack
+-------------------------------------------------
+local debugFrameStack = CreateFrame("Frame")
+local debugFrameStackEnabled = false
+
+debugFrameStack:SetScript("OnUpdate", function(self, elapsed)
+    self.timer = (self.timer or 0) + elapsed
+    if self.timer < 0.2 then return end
+    self.timer = 0
+    
+    local f = GetMouseFocus()
+    if f then
+        local name = f:GetName() or tostring(f)
+        if name ~= self.lastFrame then
+            self.lastFrame = name
+            print("|cFFFF3030[Debug]|r Frame under mouse:", name)
+            if f.GetFrameLevel then
+                print("  Level:", f:GetFrameLevel(), "Strata:", f:GetFrameStrata())
+            end
+        end
+    end
+end)
+debugFrameStack:Hide()
+
+SLASH_CELLDEBUGFRAMES1 = "/celldebugframes"
+SlashCmdList["CELLDEBUGFRAMES"] = function()
+    debugFrameStackEnabled = not debugFrameStackEnabled
+    if debugFrameStackEnabled then
+        debugFrameStack:Show()
+        print("|cFFFF3030[Cell]|r Debug Frames: ENABLED. Hover over the unclickable area.")
+    else
+        debugFrameStack:Hide()
+        print("|cFFFF3030[Cell]|r Debug Frames: DISABLED.")
+    end
+end
+
+print("Cell_Wrath Core Loaded")

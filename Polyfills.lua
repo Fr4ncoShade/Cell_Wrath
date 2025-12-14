@@ -969,8 +969,17 @@ do
 
         if not mt.__index.CreateMaskTexture then
             function mt.__index:CreateMaskTexture()
-                -- 3.3.5a has no real mask textures; fake it with a normal texture
-                return self:CreateTexture(nil, "ARTWORK")
+                -- 3.3.5a has no real mask textures; fake it with a hidden Frame (empty)
+                -- We use a Frame instead of Texture to avoid the "white box" issue if SetTexture is called.
+                local mask = CreateFrame("Frame", nil, self)
+                mask:SetAllPoints(self)
+                mask:EnableMouse(false) -- Ensure it doesn't block clicks
+                
+                -- Add dummy methods that Actions.lua expects on a Texture/Mask
+                mask.SetTexture = function() end
+                mask.SetRotated = function() end
+                
+                return mask
             end
         end
     end
@@ -2442,11 +2451,35 @@ do
         local mt = getmetatable(ag)
         local orig_CreateAnimation = mt.__index.CreateAnimation
 
+        -- Hook AnimationGroup:Play to ensure "From" values are applied
+        if not mt.__index._CellPlayHook then
+            local orig_Play = mt.__index.Play
+            mt.__index.Play = function(self)
+                -- Apply "From" state for all custom-tracked animations
+                if self._cellAnimations then
+                    for _, anim in ipairs(self._cellAnimations) do
+                        if anim._ApplyFromState then
+                            anim:_ApplyFromState()
+                        end
+                    end
+                end
+                
+                if orig_Play then 
+                    orig_Play(self) 
+                end
+            end
+            mt.__index._CellPlayHook = true
+        end
+
         mt.__index.CreateAnimation = function(self, type, name, inherits)
             -- DetailsWotlkPort crashes if name is nil, so we must provide a default
             if not name then name = type end
             
             local anim = orig_CreateAnimation(self, type, name, inherits)
+            
+            -- Track animation in the group
+            if not self._cellAnimations then self._cellAnimations = {} end
+            table.insert(self._cellAnimations, anim)
 
             if type == "Alpha" then
                 anim.SetFromAlpha = function(self, from)
@@ -2460,18 +2493,24 @@ do
                 anim._UpdateAlpha = function(self)
                     local from = self._fromAlpha or 1
                     local to = self._toAlpha or 1
+                    -- Calculate change for WotLK
                     if self.SetChange then
                         self:SetChange(to - from)
                     end
                 end
-                
-                anim:HookScript("OnPlay", function()
-                    if anim._fromAlpha then
-                        local region = anim:GetParent():GetParent()
+                anim._ApplyFromState = function(self)
+                    if self._fromAlpha then
+                        local region = self:GetParent():GetParent()
                         if region and region.SetAlpha then
-                            region:SetAlpha(anim._fromAlpha)
+                            region:SetAlpha(self._fromAlpha)
                         end
                     end
+                    -- Re-apply change in case it was lost
+                    self:_UpdateAlpha()
+                end
+                
+                anim:HookScript("OnPlay", function()
+                    anim:_ApplyFromState()
                 end)
 
             elseif type == "Scale" then
@@ -2498,16 +2537,22 @@ do
                         self:SetScale(toX / fromX, toY / fromY)
                     end
                 end
-                
-                anim:HookScript("OnPlay", function()
-                    if anim._fromX or anim._fromY then
-                        local region = anim:GetParent():GetParent()
+                anim._ApplyFromState = function(self)
+                     -- Apply initial scale to the target region
+                    if self._fromX or self._fromY then
+                        local region = self:GetParent():GetParent()
                         if region and region.SetScale then
-                            local startScale = math.max(anim._fromX or 0, anim._fromY or 0)
-                            if startScale == 0 then startScale = 0.001 end
+                            local startScale = math.max(self._fromX or 0, self._fromY or 0)
+                            if startScale <= 0.001 then startScale = 0.001 end -- Prevent 0 scale issues
                             region:SetScale(startScale)
                         end
                     end
+                    -- Re-apply change
+                    self:_UpdateScale()
+                end
+                
+                anim:HookScript("OnPlay", function()
+                    anim:_ApplyFromState()
                 end)
             end
             

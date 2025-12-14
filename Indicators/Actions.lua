@@ -24,16 +24,40 @@ local function Display(b, ...)
 end
 
 local eventFrame = CreateFrame("Frame")
-eventFrame:SetScript("OnEvent", function(self, event, unit, castGUID, spellID)
+eventFrame:SetScript("OnEvent", function(self, event, unit, arg2, arg3)
     -- filter out players not in your group
     if not (UnitInRaid(unit) or UnitInParty(unit) or unit == "player" or unit == "pet") then return end
 
-    if Cell.vars.actionsDebugModeEnabled then
-        local name = F.GetSpellInfo(spellID)
-        print("|cFFFF3030[Cell]|r |cFFB2B2B2" .. event .. ":|r", unit, "|cFF00FF00" .. (spellID or "nil") .. "|r", name)
+    local spellID
+    
+    if Cell.isRetail then
+        -- Retail: unit, castGUID, spellID
+        spellID = arg3
+        
+        if Cell.vars.actionsDebugModeEnabled then
+            local name = F.GetSpellInfo(spellID)
+            print("|cFFFF3030[Cell]|r |cFFB2B2B2" .. event .. ":|r", unit, "|cFF00FF00" .. (spellID or "nil") .. "|r", name)
+        end
+    else
+        -- WotLK/Cata/Vanilla: unit, spellName, rank
+        local spellName = arg2
+        -- Try to resolve spellID by matching name against configured actions
+        if Cell.vars.actions then
+            for id, _ in pairs(Cell.vars.actions) do
+                local name = GetSpellInfo(id)
+                if name and name == spellName then
+                    spellID = id
+                    break
+                end
+            end
+        end
+        
+        if Cell.vars.actionsDebugModeEnabled then
+            print("|cFFFF3030[Cell]|r |cFFB2B2B2" .. event .. ":|r", unit, "|cFF00FF00" .. (spellName or "nil") .. "|r", "-> ID:", spellID or "Not Found")
+        end
     end
 
-    if Cell.vars.actions[spellID] then
+    if spellID and Cell.vars.actions[spellID] then
         F.HandleUnitButton("unit", unit, Display, unpack(Cell.vars.actions[spellID]))
     end
 end)
@@ -72,6 +96,8 @@ local function CreateAnimationGroup_TypeA()
     local mask = canvas:CreateMaskTexture()
     mask:SetTexture(Cell.vars.whiteTexture, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
     mask:SetAllPoints(canvas)
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
     -- mask:SetSnapToPixelGrid(true)
     tex:AddMaskTexture(mask)
 
@@ -119,14 +145,18 @@ local function CreateAnimationGroup_TypeA()
             f:SetWidth(15)
 
             t1:SetOffset(canvas:GetWidth(), 0)
-            tex:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+            -- tex:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+            -- tex:SetGradientAlpha("HORIZONTAL", r, g, b, 0, r, g, b, 1)
+            tex:SetVertexColor(r, g, b, 1)
         else
             f:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT")
             f:SetPoint("TOPRIGHT", canvas, "BOTTOMRIGHT")
             f:SetHeight(15)
 
             t1:SetOffset(0, canvas:GetHeight())
-            tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+            -- tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+            -- tex:SetGradientAlpha("VERTICAL", r, g, b, 0, r, g, b, 1)
+            tex:SetVertexColor(r, g, b, 1)
         end
 
         a1:SetDuration(a1.duration / parent.speed)
@@ -163,12 +193,17 @@ local function CreateAnimationGroup_TypeB()
     local tex = f:CreateTexture(nil, "ARTWORK")
     tex:SetPoint("BOTTOMRIGHT")
     tex:SetWidth(WIDTH)
-    tex:SetRotation(45 * math.pi / 180, CreateVector2D(1, 0))
+    -- tex:SetRotation(45 * math.pi / 180, CreateVector2D(1, 0))
+    if tex.SetRotation then
+        tex:SetRotation(45 * math.pi / 180) -- WotLK SetRotation takes radians, no pivot vector
+    end
 
     -- mask
     local mask = canvas:CreateMaskTexture()
     mask:SetTexture(Cell.vars.whiteTexture, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
     mask:SetAllPoints(canvas)
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
     -- mask:SetSnapToPixelGrid(true)
     tex:AddMaskTexture(mask)
 
@@ -212,7 +247,9 @@ local function CreateAnimationGroup_TypeB()
 
         t1:SetOffset(canvas:GetWidth() + math.tan(math.pi / 4) * canvas:GetHeight() + WIDTH / math.cos(math.pi / 4), 0)
         tex:SetHeight(canvas:GetHeight() / math.sin(math.pi / 4) + WIDTH)
-        tex:SetColorTexture(r, g, b)
+        -- tex:SetColorTexture(r, g, b)
+        tex:SetTexture(Cell.vars.whiteTexture)
+        tex:SetVertexColor(r, g, b, 1)
 
         if ag:IsPlaying() then
             ag:Restart()
@@ -239,6 +276,9 @@ local function CreateAnimationGroup_TypeC()
     local tex = f:CreateTexture(nil, "ARTWORK")
     tex:SetAllPoints(f)
     tex:SetTexture("Interface\\AddOns\\Cell_Wrath\\Media\\Icons\\upgrade.tga")
+
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
 
     -- animation
     local ag = f:CreateAnimationGroup()
@@ -296,7 +336,9 @@ local function CreateAnimationGroup_TypeC()
 
         f:SetWidth(canvas:GetHeight() / 2)
         t1:SetOffset(0, canvas:GetHeight() / 2)
-        tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+        -- tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+        -- tex:SetGradientAlpha("VERTICAL", r, g, b, 0, r, g, b, 1)
+        tex:SetVertexColor(r, g, b, 1)
 
         if ag:IsPlaying() then
             ag:Restart()
@@ -335,6 +377,9 @@ local function CreateAnimationGroup_TypeD()
     mask2:SetTexture(Cell.vars.whiteTexture, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
     mask2:SetAllPoints(canvas)
     tex:AddMaskTexture(mask2)
+
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
 
     -- animation
     local ag = f:CreateAnimationGroup()
@@ -381,7 +426,9 @@ local function CreateAnimationGroup_TypeD()
 
         local l = math.sqrt((parent:GetParent():GetHeight() / 2) ^ 2 + (parent:GetParent():GetWidth() / 2) ^ 2) * 2
         tex:SetSize(l, l)
-        tex:SetColorTexture(r, g, b, 0.6)
+        -- tex:SetColorTexture(r, g, b, 0.6)
+        tex:SetTexture(Cell.vars.whiteTexture)
+        tex:SetVertexColor(r, g, b, 0.6)
 
         if ag:IsPlaying() then
             ag:Restart()
@@ -418,6 +465,9 @@ local function CreateAnimationGroup_TypeE()
     -- frame:SetSnapToPixelGrid(false)
     -- frame:SetTexelSnappingBias(0)
     tex:AddMaskTexture(mask)
+
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
 
     -- animation
     local ag = f:CreateAnimationGroup()
@@ -499,6 +549,9 @@ local function CreateAnimationGroup_TypeF()
     mask2:SetAllPoints(canvas)
     tex:AddMaskTexture(mask2)
 
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
+
     -- animation
     local ag = f:CreateAnimationGroup()
     canvas.ag = ag
@@ -544,7 +597,9 @@ local function CreateAnimationGroup_TypeF()
 
         local l = max(parent:GetParent():GetWidth(), parent:GetParent():GetHeight()) * 2
         tex:SetSize(l, l)
-        tex:SetColorTexture(r, g, b, 0.6)
+        -- tex:SetColorTexture(r, g, b, 0.6)
+        tex:SetTexture(Cell.vars.whiteTexture)
+        tex:SetVertexColor(r, g, b, 0.6)
 
         if ag:IsPlaying() then
             ag:Restart()
@@ -573,6 +628,9 @@ local function CreateAnimationGroup_TypeG()
     local tex = f:CreateTexture(nil, "ARTWORK")
     tex:SetAllPoints(f)
     tex:SetTexture(Cell.vars.whiteTexture)
+
+    canvas:EnableMouse(false)
+    f:EnableMouse(false)
 
     -- animation
     local ag = f:CreateAnimationGroup()
@@ -607,8 +665,10 @@ local function CreateAnimationGroup_TypeG()
         canvas:SetAllPoints(parent)
 
         f:SetHeight(canvas:GetHeight() / 2)
-
-        tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+        
+        -- tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 1))
+        -- tex:SetGradientAlpha("VERTICAL", r, g, b, 0, r, g, b, 1)
+        tex:SetVertexColor(r, g, b, 1)
 
         a1:SetDuration(a1.duration / parent.speed)
         a2:SetDuration(a2.duration / parent.speed)
@@ -637,6 +697,10 @@ end
 
 local function Actions_Display(self, animationType, color)
     -- animations[animationType]:Display(unpack(color))
+    -- if Cell.vars.actionsDebugModeEnabled then
+    --    print("Actions_Display:", animationType, color[1], color[2], color[3])
+    -- end
+
     if strfind(animationType, "^C") then
         local subType = strmatch(animationType, "%d")
         local canvas = animationPool.C:Acquire()
@@ -660,6 +724,8 @@ function I.CreateActions(parent, isPreview)
         parent.indicators.actions = actions
         actions:SetAllPoints(parent.widgets.healthBar)
     end
+    
+    actions:EnableMouse(false)
 
     actions.speed = 1
     actions.SetSpeed = Actions_SetSpeed
