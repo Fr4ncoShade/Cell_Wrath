@@ -52,7 +52,7 @@ end
 -------------------------------------------------
 local function CreateAuthorPane()
     local authorPane = Cell.CreateTitledPane(aboutTab, L["Author"], 205, 50)
-    authorPane:SetPoint("TOPLEFT", aboutTab, "TOPLEFT", 5, -130)
+    authorPane:SetPoint("TOPLEFT", aboutTab, "TOPLEFT", 5, -330)
 
     authorText = authorPane:CreateFontString(nil, "OVERLAY")
     authorText:SetPoint("TOPLEFT", 5, -27)
@@ -68,7 +68,7 @@ end
 -------------------------------------------------
 local function CreateSlashPane()
     local slashPane = Cell.CreateTitledPane(aboutTab, L["Slash Commands"], 205, 50)
-    slashPane:SetPoint("TOPLEFT", aboutTab, "TOPLEFT", 222, -130)
+    slashPane:SetPoint("TOPLEFT", aboutTab, "TOPLEFT", 222, -330)
 
     local commandText = slashPane:CreateFontString(nil, "OVERLAY", "CELL_WRATH_FONT_WIDGET")
     commandText:SetPoint("TOPLEFT", 5, -27)
@@ -429,7 +429,7 @@ end
 
 local function CreateLinksPane()
     local linksPane = Cell.CreateTitledPane(aboutTab, L["Links"], 422, 100)
-    linksPane:SetPoint("TOPLEFT", aboutTab, "TOPLEFT", 5, -480)
+    linksPane:SetPoint("TOPLEFT", aboutTab, "TOPLEFT", 5, -390)
 
     local current
 
@@ -521,7 +521,7 @@ end
 -------------------------------------------------
 local function CreateImportExportPane()
     local iePane = Cell.CreateTitledPane(aboutTab, L["Import & Export All Settings"], 422, 50)
-    iePane:SetPoint("TOPLEFT", 5, -595)
+    iePane:SetPoint("TOPLEFT", 5, -500)
 
     local importBtn = Cell.CreateButton(iePane, L["Import"], "accent-hover", {134, 20})
     importBtn:SetPoint("TOPLEFT", 5, -27)
@@ -533,10 +533,10 @@ local function CreateImportExportPane()
     exportBtn:SetScript("OnClick", F.ShowExportFrame)
     exportBtn:SetTexture("Interface\\AddOns\\Cell_Wrath\\Media\\Icons\\export", {16, 16}, {"LEFT", 2, 0})
 
-    local backupBtn = Cell.CreateButton(iePane, L["Backups"], "accent-hover", {134, 20})
-    backupBtn:SetPoint("TOPLEFT", exportBtn, "TOPRIGHT", 5, 0)
-    backupBtn:SetScript("OnClick", F.ShowBackupFrame)
-    backupBtn:SetTexture("Interface\\AddOns\\Cell_Wrath\\Media\\Icons\\backup", {16, 16}, {"LEFT", 2, 0})
+    -- local backupBtn = Cell.CreateButton(iePane, L["Backups"], "accent-hover", {134, 20})
+    -- backupBtn:SetPoint("TOPLEFT", exportBtn, "TOPRIGHT", 5, 0)
+    -- backupBtn:SetScript("OnClick", F.ShowBackupFrame)
+    -- backupBtn:SetTexture("Interface\\AddOns\\Cell_Wrath\\Media\\Icons\\backup", {16, 16}, {"LEFT", 2, 0})
 end
 
 -------------------------------------------------
@@ -548,6 +548,13 @@ local function ShowTab(tab)
         if not init then
             init = true
             CreateDescriptionPane()
+            CreateAuthorPane()
+            CreateSlashPane()
+            -- CreateTranslatorsPane()
+            -- CreateSpecialThanksPane()
+            -- CreateSupportersPane()
+            CreateLinksPane()
+            CreateImportExportPane()
         end
         aboutTab:Show()
         descriptionPane:SetTitle("Cell "..Cell.version)
