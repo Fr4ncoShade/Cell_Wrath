@@ -541,3 +541,138 @@ function I.ConvertActions(db)
     end
     return temp
 end
+
+-------------------------------------------------
+-- crowdControls
+-------------------------------------------------
+local crowdControls = { -- true: track by name, false: track by id
+    ["DEATHKNIGHT"] = {
+        [47476] = true, -- Strangulate
+        [51209] = true, -- Hungering Cold
+    },
+
+    ["DRUID"] = {
+        [99] = true, -- Demoralizing Roar
+        [339] = true, -- Entangling Roots
+        [2637] = true, -- Hibernate
+        [5211] = true, -- Bash
+        [9005] = true, -- Pounce
+        [22570] = true, -- Maim
+        [33786] = true, -- Cyclone
+        [45334] = true, -- Feral Charge Effect
+    },
+
+    ["HUNTER"] = {
+        [1513] = true, -- Scare Beast
+        [3355] = true, -- Freezing Trap Effect
+        [19386] = true, -- Wyvern Sting
+        [19503] = true, -- Scatter Shot
+        [24394] = true, -- Intimidation
+        [34490] = true, -- Silencing Shot
+    },
+
+    ["MAGE"] = {
+        [118] = true, -- Polymorph
+        [122] = true, -- Frost Nova
+        [18469] = true, -- Silenced - Improved Counterspell
+        [31589] = true, -- Slow
+        [31661] = true, -- Dragon's Breath
+        [33395] = true, -- Freeze
+        [44572] = true, -- Deep Freeze
+    },
+
+    ["PALADIN"] = {
+        [853] = true, -- Hammer of Justice
+        [10326] = true, -- Turn Evil
+        [20066] = true, -- Repentance
+        [31935] = true, -- Avenger's Shield
+    },
+
+    ["PRIEST"] = {
+        [605] = true, -- Mind Control
+        [8122] = true, -- Psychic Scream
+        [9484] = true, -- Shackle Undead
+        [15487] = true, -- Silence
+        [64044] = true, -- Psychic Horror
+    },
+
+    ["ROGUE"] = {
+        [408] = true, -- Kidney Shot
+        [1330] = true, -- Garrote - Silence
+        [1776] = true, -- Gouge
+        [1833] = true, -- Cheap Shot
+        [2094] = true, -- Blind
+        [6770] = true, -- Sap
+        [18425] = true, -- Silenced - Improved Kick
+        [51722] = true, -- Dismantle
+    },
+
+    ["SHAMAN"] = {
+        [3600] = true, -- Earthbind
+        [8056] = true, -- Frost Shock
+        [51514] = true, -- Hex
+        [63685] = true, -- Freeze
+        [64695] = true, -- Earthgrab
+    },
+
+    ["WARLOCK"] = {
+        [710] = true, -- Banish
+        [5782] = true, -- Fear
+        [6358] = true, -- Seduction
+        [6789] = true, -- Death Coil
+        [17928] = true, -- Howl of Terror
+        [24259] = true, -- Spell Lock
+        [30283] = true, -- Shadowfury
+    },
+
+    ["WARRIOR"] = {
+        [676] = true, -- Disarm
+        [7922] = true, -- Charge Stun
+        [18498] = true, -- Silenced - Gag Order
+        [20511] = true, -- Intimidating Shout
+    },
+
+    ["UNCATEGORIZED"] = {
+        [25046] = true, -- Arcane Torrent
+        [20549] = true, -- War Stomp
+    },
+}
+
+function I.GetCrowdControls()
+    return crowdControls
+end
+
+local builtInCrowdControls = {}
+local customCrowdControls = {}
+
+function I.UpdateCrowdControls(t)
+    -- user disabled
+    wipe(builtInCrowdControls)
+    for class, spells in pairs(crowdControls) do
+        for id, trackByName in pairs(spells) do
+            if not t["disabled"][id] then -- not disabled
+                if trackByName then
+                    local name = F.GetSpellInfo(id)
+                    if name then
+                        builtInCrowdControls[name] = true
+                    end
+                else
+                    builtInCrowdControls[id] = true
+                end
+            end
+        end
+    end
+
+    -- user created
+    wipe(customCrowdControls)
+    for _, id in pairs(t["custom"]) do
+        local name = F.GetSpellInfo(id)
+        if name then
+            customCrowdControls[name] = true
+        end
+    end
+end
+
+function I.IsCrowdControls(name, id)
+    return builtInCrowdControls[name] or builtInCrowdControls[id] or customCrowdControls[name]
+end

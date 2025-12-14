@@ -445,6 +445,9 @@ function eventFrame:ADDON_LOADED(arg1)
         if type(CellDB["defensives"]) ~= "table" then CellDB["defensives"] = {["disabled"]={}, ["custom"]={}} end
         if type(CellDB["externals"]) ~= "table" then CellDB["externals"] = {["disabled"]={}, ["custom"]={}} end
 
+        -- crowdControls --------------------------------------------------------------------------
+        if type(CellDB["crowdControls"]) ~= "table" then CellDB["crowdControls"] = {["disabled"]={}, ["custom"]={}} end
+
         -- raid debuffs ---------------------------------------------------------------------------
         if type(CellDB["raidDebuffs"]) ~= "table" then CellDB["raidDebuffs"] = {} end
         -- CellDB["raidDebuffs"] = {

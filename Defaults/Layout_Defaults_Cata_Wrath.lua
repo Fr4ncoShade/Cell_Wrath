@@ -1,7 +1,7 @@
 local addonName, Cell = ...
 
 -- number of built-in indicators
-Cell.defaults.builtIns = 28
+Cell.defaults.builtIns = 29
 
 Cell.defaults.indicatorIndices = {
     ["nameText"] = 1,
@@ -32,6 +32,7 @@ Cell.defaults.indicatorIndices = {
     ["targetCounter"] = 26,
     ["actions"] = 27,
     ["missingBuffs"] = 28,
+    ["crowdControls"] = 29,
 }
 
 Cell.defaults.layout = {
@@ -496,6 +497,23 @@ Cell.defaults.layout = {
             ["size"] = {13, 13},
             ["orientation"] = "right-to-left",
         }, -- 28
+        {
+            ["name"] = "Crowd Controls",
+            ["indicatorName"] = "crowdControls",
+            ["type"] = "built-in",
+            ["enabled"] = true,
+            ["position"] = {"TOPLEFT", "button", "TOPLEFT", 15, -4},
+            ["frameLevel"] = 10,
+            ["size"] = {20, 20},
+            ["border"] = 2,
+            ["num"] = 2,
+            ["showDuration"] = false,
+            ["font"] = {
+                {"Cell ".._G.DEFAULT, 11, "Outline", false, "TOPRIGHT", 2, 1, {1, 1, 1}},
+                {"Cell ".._G.DEFAULT, 11, "Outline", false, "BOTTOMRIGHT", 2, -1, {1, 1, 1}},
+            },
+            ["orientation"] = "left-to-right",
+        }, -- 29
     },
 }
 

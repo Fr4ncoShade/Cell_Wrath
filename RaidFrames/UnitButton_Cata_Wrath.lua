@@ -123,6 +123,7 @@ local function UpdateIndicatorParentVisibility(b, indicatorName, enabled)
             indicatorName == "defensiveCooldowns" or
             indicatorName == "externalCooldowns" or
             indicatorName == "allCooldowns" or
+            indicatorName == "crowdControls" or
             indicatorName == "dispels" or
             indicatorName == "missingBuffs") then
         return
@@ -222,6 +223,7 @@ local function HandleIndicators(b)
         I.CreateExternalCooldowns(b)
         I.CreateAllCooldowns(b)
         I.CreateDebuffs(b)
+        I.CreateCrowdControls(b)
     end
 
     -- NOTE: Remove old
