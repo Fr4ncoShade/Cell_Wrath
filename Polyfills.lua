@@ -1250,20 +1250,23 @@ if not C_UnitAuras then
     end
 
     function C_UnitAuras.GetAuraDataBySpellName(unit, spellName, filter)
-        local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spellName, nil, filter)
-        if name then
-            return {
-                name = name,
-                icon = icon,
-                count = count,
-                debuffType = debuffType,
-                duration = duration,
-                expirationTime = expirationTime,
-                sourceUnit = unitCaster,
-                isStealable = isStealable,
-                spellId = spellId,
-                points = {} -- Placeholder
-            }
+        for i = 1, 40 do
+            local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, i, filter)
+            if not name then break end
+            if name == spellName then
+                return {
+                    name = name,
+                    icon = icon,
+                    count = count,
+                    debuffType = debuffType,
+                    duration = duration,
+                    expirationTime = expirationTime,
+                    sourceUnit = unitCaster,
+                    isStealable = isStealable,
+                    spellId = spellId,
+                    points = {} -- Placeholder
+                }
+            end
         end
         return nil
     end

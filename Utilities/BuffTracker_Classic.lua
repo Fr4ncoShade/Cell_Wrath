@@ -13,7 +13,7 @@ local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsUnit = UnitIsUnit
 local UnitIsPlayer = UnitIsPlayer
 local UnitGUID = UnitGUID
-local UnitClassBase = UnitClassBase
+local UnitClass = UnitClass
 local UnitLevel = UnitLevel
 local IsInGroup = IsInGroup
 local IsInRaid = IsInRaid
@@ -221,7 +221,7 @@ end
 local classBuffs = {}
 local buffOrder = {}
 local buffsProvidedByMe = {}
-local myClass = UnitClassBase("player")
+local _, myClass = UnitClass("player")
 
 do
     local function Handle(buff, t, k)
@@ -667,7 +667,8 @@ local function CheckUnit(unit, updateBtn)
     hasBuffFromMe[unit] = nil
 
     if UnitIsConnected(unit) and UnitIsVisible(unit) and not UnitIsDeadOrGhost(unit) then
-        local required = requiredBuffs[UnitClassBase(unit)]
+        local _, class = UnitClass(unit)
+        local required = requiredBuffs[class]
         for buff in pairs(available) do
             if required[buff] then
                 local exists, providedByMe = UnitBuffExists(unit, buff)
@@ -701,8 +702,9 @@ local function IterateAllUnits()
 
     local class, level
     for unit in F.IterateGroupMembers() do
+        -- print("IterateAllUnits checking:", unit)
         if UnitIsConnected(unit) and UnitIsVisible(unit) then
-            class = UnitClassBase(unit)
+            _, class = UnitClass(unit)
             level = UnitLevel(unit)
             if classBuffs[class] then
                 for buff, lvl in pairs(classBuffs[class]) do
@@ -754,25 +756,25 @@ end
 local timer
 function buffTrackerFrame:GROUP_ROSTER_UPDATE(immediate)
     if timer then timer:Cancel() end
-    if IsInGroup() then
+    -- if IsInGroup() then
         buffTrackerFrame:RegisterEvent("READY_CHECK")
         buffTrackerFrame:RegisterEvent("UNIT_FLAGS")
         buffTrackerFrame:RegisterEvent("PLAYER_UNGHOST")
         buffTrackerFrame:RegisterEvent("UNIT_AURA")
         -- buffTrackerFrame:RegisterEvent("PARTY_MEMBER_ENABLE")
         -- buffTrackerFrame:RegisterEvent("PARTY_MEMBER_DISABLE")
-    else
-        buffTrackerFrame:UnregisterEvent("READY_CHECK")
-        buffTrackerFrame:UnregisterEvent("UNIT_FLAGS")
-        buffTrackerFrame:UnregisterEvent("PLAYER_UNGHOST")
-        buffTrackerFrame:UnregisterEvent("UNIT_AURA")
-        -- buffTrackerFrame:UnregisterEvent("PARTY_MEMBER_ENABLE")
-        -- buffTrackerFrame:UnregisterEvent("PARTY_MEMBER_DISABLE")
-
-        Reset()
-        RepointButtons()
-        return
-    end
+    -- else
+    --     buffTrackerFrame:UnregisterEvent("READY_CHECK")
+    --     buffTrackerFrame:UnregisterEvent("UNIT_FLAGS")
+    --     buffTrackerFrame:UnregisterEvent("PLAYER_UNGHOST")
+    --     buffTrackerFrame:UnregisterEvent("UNIT_AURA")
+    --     -- buffTrackerFrame:UnregisterEvent("PARTY_MEMBER_ENABLE")
+    --     -- buffTrackerFrame:UnregisterEvent("PARTY_MEMBER_DISABLE")
+    --
+    --     Reset()
+    --     RepointButtons()
+    --     return
+    -- end
 
     if immediate then
         IterateAllUnits()
