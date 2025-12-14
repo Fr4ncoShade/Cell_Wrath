@@ -78,17 +78,7 @@ Cell.frames.menuFrame = menuFrame
 menuFrame:SetAllPoints(anchorFrame)
 menuFrame:SetFrameLevel(27)
 
-menuFrame.fadeIn = menuFrame:CreateAnimationGroup()
-local fadeInAlpha = menuFrame.fadeIn:CreateAnimation("Alpha")
-fadeInAlpha:SetChange(1)
-fadeInAlpha:SetDuration(0.3)
-fadeInAlpha:SetSmoothing("OUT")
 
-menuFrame.fadeOut = menuFrame:CreateAnimationGroup()
-local fadeOutAlpha = menuFrame.fadeOut:CreateAnimation("Alpha")
-fadeOutAlpha:SetChange(-1)
-fadeOutAlpha:SetDuration(0.3)
-fadeOutAlpha:SetSmoothing("OUT")
 
 local options = Cell.CreateButton(menuFrame, "", "red", {20, 10}, false, true)
 P.Point(options, "TOPLEFT", menuFrame)
@@ -204,31 +194,69 @@ P.Point(loadingBar, "BOTTOMRIGHT", options, -1, 1)
 --     end
 -- end)
 --@end-debug@]==]
+-------------------------------------------------
+-- fade out
+-------------------------------------------------
+local fadeTimer
+local function FadeOnUpdate(self, elapsed)
+    local currentAlpha = self:GetAlpha()
+    local targetAlpha = self.targetAlpha or 1
+    local change = (elapsed / 0.25) -- Fade duration 0.25s
 
-menuFrame.fadeOut:SetScript("OnFinished", function()
-    fadingIn = false
-    fadingOut = false
-    fadedIn = false
-    fadedOut = true
-    menuFrame:SetAlpha(0)
-
-    if hoverFrame:IsMouseOver() then
-        menuFrame.fadeIn:Play()
+    if currentAlpha < targetAlpha then
+        currentAlpha = currentAlpha + change
+        if currentAlpha >= targetAlpha then
+            currentAlpha = targetAlpha
+            self:SetScript("OnUpdate", nil)
+        end
+    elseif currentAlpha > targetAlpha then
+        currentAlpha = currentAlpha - change
+        if currentAlpha <= targetAlpha then
+            currentAlpha = targetAlpha
+            self:SetScript("OnUpdate", nil)
+        end
+    else
+        self:SetScript("OnUpdate", nil)
     end
-end)
+
+    self:SetAlpha(currentAlpha)
+end
+
+local function SmartFadeIn()
+    if menuFrame:GetAlpha() == 1 then return end
+    menuFrame.targetAlpha = 1
+    menuFrame:SetScript("OnUpdate", FadeOnUpdate)
+end
+
+local function SmartFadeOut()
+    if menuFrame:GetAlpha() == 0 then return end
+    menuFrame.targetAlpha = 0
+    menuFrame:SetScript("OnUpdate", FadeOnUpdate)
+end
+
+local fadeOutTimer
 
 hoverFrame:SetScript("OnEnter", function()
-    if not CellDB["general"]["fadeOut"] then return end
-    if not (fadingIn or fadedIn) then
-        menuFrame.fadeIn:Play()
+    if fadeOutTimer then
+        fadeOutTimer:Cancel()
+        fadeOutTimer = nil
     end
+
+    if not CellDB["general"]["fadeOut"] then return end
+    SmartFadeIn()
 end)
+
 hoverFrame:SetScript("OnLeave", function()
     if not CellDB["general"]["fadeOut"] then return end
-    if hoverFrame:IsMouseOver() then return end
-    if not (fadingOut or fadedOut) then
-        menuFrame.fadeOut:Play()
-    end
+
+    if fadeOutTimer then fadeOutTimer:Cancel() end
+    fadeOutTimer = C_Timer.NewTimer(0.1, function()
+        fadeOutTimer = nil
+        if not CellDB["general"]["fadeOut"] then return end
+        if hoverFrame:IsMouseOver() then return end
+        
+        SmartFadeOut()
+    end)
 end)
 
 local function UpdateHoverFrame()
@@ -241,18 +269,22 @@ local function UpdateHoverFrame()
         top, bottom = anchorFrame, anchorFrame
         if strfind(anchor, "LEFT$") then
             left = anchorFrame
-            right = raid:IsShown() and raid or anchorFrame
+            right = anchorFrame
+            if raid:IsShown() then right = raid end
         else -- RIGHT$
-            left = raid:IsShown() and raid or anchorFrame
+            left = anchorFrame
+            if raid:IsShown() then left = raid end
             right = anchorFrame
         end
     else -- left_right
         left, right = anchorFrame, anchorFrame
         if strfind(anchor, "^TOP") then
             top = anchorFrame
-            bottom = raid:IsShown() and raid or anchorFrame
+            bottom = anchorFrame
+            if raid:IsShown() then bottom = raid end
         else -- ^BOTTOM
-            top = raid:IsShown() and raid or anchorFrame
+            top = anchorFrame
+            if raid:IsShown() then top = raid end
             bottom = anchorFrame
         end
     end
@@ -456,27 +488,23 @@ local function UpdateMenu(which)
     end
 
     if not which or which == "fadeOut" then
+        -- Clean up timer if verifying settings
+        if fadeOutTimer then
+            fadeOutTimer:Cancel()
+            fadeOutTimer = nil
+        end
+        
+        -- Stop any fade script
+        menuFrame:SetScript("OnUpdate", nil)
+
         if CellDB["general"]["fadeOut"] then
-            menuFrame.fadeOut:Play()
-            -- local totalElapsed = 0
-            -- menuFrame:SetScript("OnUpdate", function(self, elapsed)
-            --     totalElapsed = totalElapsed + elapsed
-            --     if totalElapsed >= 0.25 then
-            --         totalElapsed = 0
-            --         if (options:IsShown() and options:IsMouseOver(hoverTop, hoverBottom, hoverLeft, hoverRight)) or (raid:IsShown() and raid:IsMouseOver(hoverTop, hoverBottom, hoverLeft, hoverRight)) then -- mouseover
-            --             if not (fadingIn or fadedIn) then
-            --                 menuFrame.fadeIn:Play()
-            --             end
-            --         else -- mouseout
-            --             if not (fadingOut or fadedOut) then
-            --                 menuFrame.fadeOut:Play()
-            --             end
-            --         end
-            --     end
-            -- end)
+            if hoverFrame:IsMouseOver() then
+                menuFrame:SetAlpha(1)
+            else
+                menuFrame:SetAlpha(0)
+            end
         else
-            menuFrame.fadeIn:Play()
-            -- menuFrame:SetScript("OnUpdate", nil)
+            menuFrame:SetAlpha(1)
         end
     end
 
