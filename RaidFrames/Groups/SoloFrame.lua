@@ -114,7 +114,7 @@ Cell.RegisterCallback("UpdateLayout", "SoloFrame_UpdateLayout", SoloFrame_Update
 local function SoloFrame_GroupTypeChanged(groupType)
     if groupType == "solo" then
         -- Force update after a delay to ensure frame is visible
-        C_Timer.After(1, function()
+        C_Timer.After(0.5, function()
             if Cell.vars.groupType == "solo" then
                 -- Force update player button
                 if playerButton then

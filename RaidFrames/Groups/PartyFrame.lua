@@ -432,7 +432,7 @@ Cell.RegisterCallback("UpdateLayout", "PartyFrame_UpdateLayout", PartyFrame_Upda
 local function PartyFrame_GroupTypeChanged(groupType)
     if groupType == "party" then
         -- Force update after a delay to ensure frame is visible
-        C_Timer.After(1, function()
+        C_Timer.After(0.5, function()
             if Cell.vars.groupType == "party" then
                 -- Force show the frame if not visible
                 if not partyFrame:IsVisible() then
