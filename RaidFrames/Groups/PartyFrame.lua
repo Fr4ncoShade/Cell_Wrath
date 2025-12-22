@@ -168,13 +168,12 @@ end)
 
 local function PartyFrame_UpdateLayout(layout, which)
     -- visibility
-    --! WotLK 3.3.5a: Party frame handles both "party" and "solo" group types
-    if (Cell.vars.groupType ~= "party" and Cell.vars.groupType ~= "solo") or Cell.vars.isHidden then
+    if Cell.vars.groupType ~= "party" or Cell.vars.isHidden then
         UnregisterAttributeDriver(partyFrame, "state-visibility")
         partyFrame:Hide()
         return
     else
-        --! WotLK 3.3.5a: Simplified visibility driver - just show when groupType is party or solo
+        --! WotLK 3.3.5a: Simplified visibility driver - just show when groupType is party
         RegisterAttributeDriver(partyFrame, "state-visibility", "show")
         partyFrame:Show()  --! WotLK 3.3.5a: Must explicitly call Show()
     end

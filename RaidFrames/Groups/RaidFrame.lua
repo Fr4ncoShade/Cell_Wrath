@@ -124,21 +124,10 @@ do
     combinedHeader:Show()
     combinedHeader:SetAttribute("startingIndex", 1)
 
-    --! WotLK 3.3.5a: SecureGroupHeaderTemplate doesn't create buttons automatically in WotLK
-    --! Manually create 40 buttons for raid members (raid1-raid40)
-    for i = 1, 40 do
-        local buttonName = "CellRaidFrameMember" .. i
-        local button = CreateFrame("Button", buttonName, combinedHeader, "CellUnitButtonTemplate,SecureUnitButtonTemplate")
-        button:SetID(i)
-        combinedHeader[i] = button
+    --! WotLK 3.3.5a: SecureGroupHeaderTemplate creates buttons automatically via attributes
+    --! We force creation using the startingIndex trick above
+    --! Buttons will be registered in CellUnitButton_OnLoad
 
-        local unit = "raid" .. i
-        button:SetAttribute("unit", unit)
-        RegisterUnitWatch(button)
-
-        -- OmniCD
-        _G[buttonName] = button
-    end
 
     -- for npcFrame's point
     raidFrame:SetFrameRef("combinedHeader", combinedHeader)
@@ -189,19 +178,10 @@ local function CreateGroupHeader(group)
     header:Show()
     header:SetAttribute("startingIndex", 1)
 
-    --! WotLK 3.3.5a: SecureGroupHeaderTemplate doesn't create buttons automatically in WotLK
-    --! Manually create 5 buttons for each raid group
-    for i = 1, 5 do
-        local raidIndex = (group - 1) * 5 + i
-        local buttonName = "CellRaidFrameGroup" .. group .. "Member" .. i
-        local button = CreateFrame("Button", buttonName, header, "CellUnitButtonTemplate,SecureUnitButtonTemplate")
-        button:SetID(i)
-        header[i] = button
+    --! WotLK 3.3.5a: SecureGroupHeaderTemplate creates buttons automatically via attributes
+    --! We force creation using the cheat above
+    --! Buttons will be registered in CellUnitButton_OnLoad
 
-        local unit = "raid" .. raidIndex
-        button:SetAttribute("unit", unit)
-        RegisterUnitWatch(button)
-    end
 
     -- for npcFrame's point
     raidFrame:SetFrameRef("subgroup"..group, header)

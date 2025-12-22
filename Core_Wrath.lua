@@ -1025,4 +1025,4 @@ SlashCmdList["CELLDEBUGFRAMES"] = function()
     end
 end
 
-print("Cell_Wrath Core Loaded")
+-- print("Cell_Wrath Core Loaded")

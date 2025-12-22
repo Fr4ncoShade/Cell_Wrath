@@ -3920,6 +3920,24 @@ local DumbFunc = function() end
 function CellUnitButton_OnLoad(button)
     local name = button:GetName()
 
+    --! WotLK 3.3.5a: Auto-register raid buttons created by SecureGroupHeader
+    if name and name:find("CellRaidFrame") then
+        local parent = button:GetParent()
+        if parent and parent:GetName() and parent:GetName():find("CellRaidFrameHeader") then
+            local id = name:match("UnitButton(%d+)")
+            if id then
+                id = tonumber(id)
+                if not parent[id] then
+                    parent[id] = button
+                    RegisterUnitWatch(button)
+                    
+                    -- OmniCD support
+                    _G[name] = button
+                end
+            end
+        end
+    end
+
     button.widgets = {}
     button.states = {}
     button.indicators = {}

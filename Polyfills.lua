@@ -1807,7 +1807,7 @@ do
             _G.Cell.funcs.Debug(...)
         else
             -- Fallback to plain print for early-load cases
-            print("|cFF33CC33[Cell RosterProxy]|r", ...)
+            -- print("|cFF33CC33[Cell RosterProxy]|r", ...)
         end
     end
 
@@ -2124,7 +2124,7 @@ do
             end
         end
 
-        print("|cFF00FF00[Cell]|r Debug logging active. Use /celldebug fonts")
+        -- print("|cFF00FF00[Cell]|r Debug logging active. Use /celldebug fonts")
     end
 end
 
