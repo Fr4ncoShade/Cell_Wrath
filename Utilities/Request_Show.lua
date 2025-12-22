@@ -357,11 +357,15 @@ end
 DR:SetScript("OnEvent", function(self, event, ...)
     if event == "COMBAT_LOG_EVENT_UNFILTERED" then
         -- WotLK 3.3.5a doesn't have CombatLogGetCurrentEventInfo; args passed directly in ...
-        local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellID
+        -- WotLK 3.3.5a: sourceRaidFlags and destRaidFlags don't exist (added in 4.2.0)
+        local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellID
         if CombatLogGetCurrentEventInfo then
+            -- Retail/Cata+ has sourceRaidFlags and destRaidFlags
+            local sourceRaidFlags, destRaidFlags
             timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellID = CombatLogGetCurrentEventInfo()
         else
-            timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellID = ...
+            -- WotLK 3.3.5a: No sourceRaidFlags/destRaidFlags
+            timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellID = ...
         end
         if subEvent == "SPELL_AURA_REMOVED" then
             local unit = Cell.vars.guids[destGUID]

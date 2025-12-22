@@ -216,11 +216,15 @@ local boss678_buttonToGuid = {}
 local cleu = CreateFrame("Frame")
 cleu:SetScript("OnEvent", function(self, event, ...)
     -- WotLK 3.3.5a doesn't have CombatLogGetCurrentEventInfo; args passed directly in ...
-    local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags
+    -- WotLK 3.3.5a: sourceRaidFlags and destRaidFlags don't exist (added in 4.2.0)
+    local timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags
     if CombatLogGetCurrentEventInfo then
+        -- Retail/Cata+ has sourceRaidFlags and destRaidFlags
+        local sourceRaidFlags, destRaidFlags
         timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
     else
-        timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = ...
+        -- WotLK 3.3.5a: No sourceRaidFlags/destRaidFlags
+        timestamp, subEvent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = ...
     end
     if boss678_guidToButton[destGUID] then
         if subEvent == "SPELL_HEAL" or subEvent == "SPELL_PERIODIC_HEAL" or subEvent == "SPELL_DAMAGE" or subEvent == "SPELL_PERIODIC_DAMAGE" then

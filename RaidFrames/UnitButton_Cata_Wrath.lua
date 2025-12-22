@@ -2685,11 +2685,15 @@ end)
 local cleuHealthUpdater = CreateFrame("Frame", "CellCleuHealthUpdater")
 cleuHealthUpdater:SetScript("OnEvent", function(self, event, ...)
     -- WotLK 3.3.5a doesn't have CombatLogGetCurrentEventInfo; args passed directly in ...
-    local _, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22
+    -- WotLK 3.3.5a: sourceRaidFlags and destRaidFlags don't exist (added in 4.2.0)
+    local _, subEvent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22
     if CombatLogGetCurrentEventInfo then
+        -- Retail/Cata+ has sourceRaidFlags and destRaidFlags
+        local sourceRaidFlags, destRaidFlags
         _, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22 = CombatLogGetCurrentEventInfo()
     else
-        _, subEvent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22 = ...
+        -- WotLK 3.3.5a: No sourceRaidFlags/destRaidFlags
+        _, subEvent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22 = ...
     end
 
     if not F.IsFriend(destFlags) then return end
@@ -3028,9 +3032,16 @@ local function UnitButton_OnAttributeChanged(self, name, value)
             self.states.displayedUnit = value
             if string.find(value, "raid") then Cell.unitButtons.raid.units[value] = self end
             -- WotLK 3.3.5a: Also populate party units (player, party1-4, pet, partypet1-4)
+            -- Only add to units table if the unit actually exists to prevent duplicates when leaving party
             if string.find(value, "party") or value == "player" or value == "pet" or string.find(value, "partypet") then
-                Cell.unitButtons.party.units[value] = self
-                Cell.funcs.Debug("|cff00ffff[OnAttributeChanged] Populated party unit:|r", value, "Button:", self:GetName())
+                if UnitExists(value) then
+                    Cell.unitButtons.party.units[value] = self
+                    Cell.funcs.Debug("|cff00ffff[OnAttributeChanged] Populated party unit:|r", value, "Button:", self:GetName())
+                else
+                    -- Unit no longer exists, ensure it's cleared from the table
+                    Cell.unitButtons.party.units[value] = nil
+                    Cell.funcs.Debug("|cffff0000[OnAttributeChanged] Cleared invalid party unit:|r", value, "Button:", self:GetName())
+                end
             end
             -- for omnicd
             if string.match(value, "raid%d") then

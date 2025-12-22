@@ -231,7 +231,7 @@ L["Fade Out These Buttons"] = "Скрывать эти фреймы"
 L["fadeOut"] = "Скрывать со временем"
 L["Faster Health Updates"] = "Быстрое обновление HP"
 --[[Translation missing --]]
---[[ L["FEIGN"] = ""--]]
+L["FEIGN"] = "ПРИТВОРИЛСЯ"
 L["Filter Auto Switch"] = "Авт. перекл. фильтра"
 L["first %d"] = "первый(я)"
 L["Flash"] = "Мерцание"

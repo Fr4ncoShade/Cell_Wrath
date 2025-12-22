@@ -25,7 +25,16 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event ~= "COMBAT_LOG_EVENT_UNFILTERED" then return end
 
-    local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName = GetCLEUInfo(...)
+    -- WotLK 3.3.5a: sourceRaidFlags and destRaidFlags don't exist (added in 4.2.0)
+    local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellId, spellName
+    if CombatLogGetCurrentEventInfo then
+        -- Retail/Cata+ has sourceRaidFlags and destRaidFlags
+        local sourceRaidFlags, destRaidFlags
+        timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName = GetCLEUInfo(...)
+    else
+        -- WotLK 3.3.5a: No sourceRaidFlags/destRaidFlags
+        timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellId, spellName = GetCLEUInfo(...)
+    end
     -- if subevent == "SPELL_SUMMON" then print(subevent, sourceName, sourceGUID, destName, destGUID, spellName) end
     if subevent == "SPELL_SUMMON" then
         -- print(sourceGUID == Cell.vars.playerGUID, destGUID, spellName, spellId)

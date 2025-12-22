@@ -186,7 +186,8 @@ function frame:ENCOUNTER_START()
 end
 
 function frame:COMBAT_LOG_EVENT_UNFILTERED(...)
-    local timestamp, event, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, arg12, arg13, arg14 = ...
+    -- WotLK 3.3.5a: sourceRaidFlags and destRaidFlags don't exist (added in 4.2.0)
+    local timestamp, event, hideCaster, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, arg12, arg13, arg14 = ...
     local amount, overkill, school, resisted, blocked, absorbed, critical -- glancing, crushing
 
     -- arg12, arg13, arg14,
