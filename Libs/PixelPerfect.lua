@@ -5,6 +5,15 @@
 local _, addon = ...
 addon.pixelPerfectFuncs = {}
 
+local function Clamp(val, minVal, maxVal)
+    if val < minVal then
+        return minVal
+    elseif val > maxVal then
+        return maxVal
+    end
+    return val
+end
+
 local function Round(num, numDecimalPlaces)
     if numDecimalPlaces and numDecimalPlaces >= 0 then
         local mult = 10 ^ numDecimalPlaces
