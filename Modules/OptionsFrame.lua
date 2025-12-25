@@ -8,8 +8,8 @@ local lastShownTab
 local optionsFrame = Cell.CreateFrame("CellOptionsFrame", Cell.frames.mainFrame, 432, 401)
 Cell.frames.optionsFrame = optionsFrame
 PixelUtil.SetPoint(optionsFrame, "CENTER", CellParent, "CENTER", 1, -1)
-optionsFrame:SetFrameStrata("DIALOG")
-optionsFrame:SetFrameLevel(520)
+--optionsFrame:SetFrameStrata("DIALOG")
+--optionsFrame:SetFrameLevel(520)
 optionsFrame:SetClampedToScreen(true)
 optionsFrame:SetClampRectInsets(0, 0, 40, 0)
 optionsFrame:SetMovable(true)
