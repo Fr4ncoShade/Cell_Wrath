@@ -192,6 +192,7 @@ end
 -----------------------------------------
 -- enable/disable
 -----------------------------------------
+--
 function Cell.SetEnabled(isEnabled, ...)
     for _, w in pairs({...}) do
         if w:IsObjectType("FontString") then
@@ -1267,10 +1268,12 @@ function Cell.CreateSlider(name, parent, low, high, width, step, onValueChangedF
     ]]
 
     slider:SetValue(low) -- NOTE: needs to be after OnValueChanged
-
+--[[
     slider:SetScript("OnDisable", function()
         label:SetTextColor(0.4, 0.4, 0.4)
         currentEditBox:SetEnabled(false)
+		--Cell.SetEnabled(false, currentEditBox)
+
         slider:SetScript("OnEnter", nil)
         slider:SetScript("OnLeave", nil)
         tex:SetColorTexture(0.4, 0.4, 0.4, 0.7)
@@ -1281,12 +1284,46 @@ function Cell.CreateSlider(name, parent, low, high, width, step, onValueChangedF
     slider:SetScript("OnEnable", function()
         label:SetTextColor(1, 1, 1)
         currentEditBox:SetEnabled(true)
+		--Cell.SetEnabled(true, currentEditBox)
+
         slider:SetScript("OnEnter", slider.onEnter)
         slider:SetScript("OnLeave", slider.onLeave)
         tex:SetColorTexture(accentColor.t[1], accentColor.t[2], accentColor.t[3], 0.7)
         lowText:SetTextColor(unpack(colors.grey.t))
         highText:SetTextColor(unpack(colors.grey.t))
     end)
+	]]
+	slider:SetScript("OnDisable", function()
+		label:SetTextColor(0.4, 0.4, 0.4)
+
+		if currentEditBox then
+			currentEditBox:ClearFocus()
+			currentEditBox:EnableMouse(false)
+			currentEditBox:SetTextColor(0.5, 0.5, 0.5)
+		end
+
+		slider:SetScript("OnEnter", nil)
+		slider:SetScript("OnLeave", nil)
+		tex:SetColorTexture(0.4, 0.4, 0.4, 0.7)
+		lowText:SetTextColor(0.4, 0.4, 0.4)
+		highText:SetTextColor(0.4, 0.4, 0.4)
+	end)
+
+	slider:SetScript("OnEnable", function()
+		label:SetTextColor(1, 1, 1)
+
+		if currentEditBox then
+			currentEditBox:EnableMouse(true)
+			currentEditBox:SetTextColor(1, 1, 1)
+		end
+
+		slider:SetScript("OnEnter", slider.onEnter)
+		slider:SetScript("OnLeave", slider.onLeave)
+		tex:SetColorTexture(accentColor.t[1], accentColor.t[2], accentColor.t[3], 0.7)
+		lowText:SetTextColor(unpack(colors.grey.t))
+		highText:SetTextColor(unpack(colors.grey.t))
+	end)
+
 
     function slider:UpdateMinMaxValues(minV, maxV)
         slider:SetMinMaxValues(minV, maxV)
@@ -1749,7 +1786,8 @@ function Cell.CreateMask(parent, text, points) -- points = {topleftX, topleftY, 
     else
         parent.mask:SetAllPoints(parent) -- anchor points are set to those of its "parent"
     end
-    parent.mask:Show()
+    --parent.mask:Show()
+	parent.mask:Hide()
 end
 
 function Cell.CreateCombatMask(parent, x1, y1, x2, y2)
