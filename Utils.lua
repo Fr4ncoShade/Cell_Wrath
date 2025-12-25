@@ -77,7 +77,6 @@ do
     sort(sortedClasses)
 end
 ]]
-
 do
 	if GetClassInfo then
 		local highestClassID = 11
@@ -112,6 +111,7 @@ do
 
 	sort(sortedClasses)
 end
+
 
 function F.GetClassID(classFile)
     return classFileToID[classFile]
@@ -2094,6 +2094,7 @@ local function predicate(...)
     return idToFind == id
 end
 
+--[[
 function F.FindAuraById(unit, type, spellId)
     if type == "BUFF" then
         return AuraUtil.FindAura(predicate, unit, "HELPFUL", spellId)
@@ -2101,6 +2102,34 @@ function F.FindAuraById(unit, type, spellId)
         return AuraUtil.FindAura(predicate, unit, "HARMFUL", spellId)
     end
 end
+]]
+function F.FindAuraById(unit, auraType, spellId)
+    local i = 1
+    local name, _, _, _, _, _, _, _, _, id
+
+    if auraType == "BUFF" then
+        while true do
+            name, _, _, _, _, _, _, _, _, id = UnitBuff(unit, i)
+            if not name then break end
+            if id == spellId then
+                return name, i
+            end
+            i = i + 1
+        end
+    else -- "DEBUFF"
+        while true do
+            name, _, _, _, _, _, _, _, _, id = UnitDebuff(unit, i)
+            if not name then break end
+            if id == spellId then
+                return name, i
+            end
+            i = i + 1
+        end
+    end
+
+    return nil
+end
+
 
 if Cell.isRetail then
     function F.FindDebuffByIds(unit, spellIds)
