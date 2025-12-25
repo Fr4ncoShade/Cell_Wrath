@@ -81,6 +81,38 @@ end
 -------------------------------------------------
 -- animation: A
 -------------------------------------------------
+if not CreateObjectPool then
+	local ObjectPool = {}
+	ObjectPool.__index = ObjectPool
+
+	function ObjectPool:Acquire(...)
+		local obj = tremove(self.pool)
+		if not obj then
+			obj = self.createFunc(...)
+		end
+		if self.resetterFunc then
+			self.resetterFunc(obj)
+		end
+		obj:Show()
+		return obj
+	end
+
+	function ObjectPool:Release(obj)
+		if not obj then return end
+		obj:Hide()
+		tinsert(self.pool, obj)
+	end
+
+	function CreateObjectPool(createFunc, resetterFunc)
+		return setmetatable({
+			pool = {},
+			createFunc = createFunc,
+			resetterFunc = resetterFunc,
+		}, ObjectPool)
+	end
+end
+
+-------------------------------------------------
 local function CreateAnimationGroup_TypeA()
     local canvas = CreateFrame("Frame")
 
