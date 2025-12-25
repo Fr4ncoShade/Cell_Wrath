@@ -79,13 +79,22 @@ local function Shared_SetFont(frame, font1, font2)
 end
 
 local function Shared_ShowStack(frame, show)
-    frame.stack:SetShown(show)
+    if show then
+        frame.stack:Show()
+    else
+        frame.stack:Hide()
+    end
 end
 
 local function Shared_ShowDuration(frame, show)
     frame.showDuration = show
-    frame.duration:SetShown(show)
+    if show then
+        frame.duration:Show()
+    else
+        frame.duration:Hide()
+    end
 end
+
 
 -------------------------------------------------
 -- VerticalCooldown
