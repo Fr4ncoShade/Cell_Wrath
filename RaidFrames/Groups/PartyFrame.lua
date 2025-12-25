@@ -91,7 +91,11 @@ for i = 1, 5 do
 
     -- Create pet button
     local petButton = CreateFrame("Button", buttonName.."Pet", playerButton, "CellUnitButtonTemplate")
-    petButton:SetIgnoreParentAlpha(true)
+    --petButton:SetIgnoreParentAlpha(true)
+	if petButton.SetIgnoreParentAlpha then
+		petButton:SetIgnoreParentAlpha(true)
+	end
+
     petButton:SetAttribute("toggleForVehicle", false)
 
     local petUnit
