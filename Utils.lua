@@ -49,6 +49,7 @@ local sortedClasses = {}
 local classFileToID = {}
 local classIDToFile = {}
 
+--[[
 do
     -- WARRIOR = 1,
     -- PALADIN = 2,
@@ -74,6 +75,42 @@ do
         end
     end
     sort(sortedClasses)
+end
+]]
+
+do
+	if GetClassInfo then
+		local highestClassID = 11
+		for i = 1, highestClassID do
+			local classFile, classID = select(2, GetClassInfo(i))
+			if classFile and classID == i then
+				tinsert(sortedClasses, classFile)
+				classFileToID[classFile] = i
+				classIDToFile[i] = classFile
+			end
+		end
+	else
+		local CLASS_ID_MAP = {
+			[1]  = "WARRIOR",
+			[2]  = "PALADIN",
+			[3]  = "HUNTER",
+			[4]  = "ROGUE",
+			[5]  = "PRIEST",
+			[6]  = "DEATHKNIGHT",
+			[7]  = "SHAMAN",
+			[8]  = "MAGE",
+			[9]  = "WARLOCK",
+			[11] = "DRUID",
+		}
+
+		for classID, classFile in pairs(CLASS_ID_MAP) do
+			tinsert(sortedClasses, classFile)
+			classFileToID[classFile] = classID
+			classIDToFile[classID] = classFile
+		end
+	end
+
+	sort(sortedClasses)
 end
 
 function F.GetClassID(classFile)
