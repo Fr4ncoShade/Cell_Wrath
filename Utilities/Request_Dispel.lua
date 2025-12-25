@@ -402,7 +402,11 @@ local flipBookFrames = {
 function U.CreateDispelRequestText(parent)
     local drText = CreateFrame("Frame", parent:GetName().."DispelRequestText", parent.widgets.indicatorFrame)
     parent.widgets.drText = drText
-    drText:SetIgnoreParentAlpha(true)
+    --drText:SetIgnoreParentAlpha(true)
+	if drText.SetIgnoreParentAlpha then
+		drText:SetIgnoreParentAlpha(true)
+	end
+
     drText:SetFrameLevel(parent.widgets.indicatorFrame:GetFrameLevel()+110)
     drText:Hide()
 
