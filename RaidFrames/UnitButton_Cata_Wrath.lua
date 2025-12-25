@@ -1700,7 +1700,13 @@ end
 local function ShowPowerBar(b)
     b.widgets.powerBar:Show()
     b.widgets.powerBarLoss:Show()
-    b.widgets.gapTexture:SetShown(CELL_BORDER_SIZE ~= 0)
+    --b.widgets.gapTexture:SetShown(CELL_BORDER_SIZE ~= 0)
+	if CELL_BORDER_SIZE ~= 0 then
+		b.widgets.gapTexture:Show()
+	else
+		b.widgets.gapTexture:Hide()
+	end
+
 
     P.ClearPoints(b.widgets.healthBar)
     P.ClearPoints(b.widgets.powerBar)
