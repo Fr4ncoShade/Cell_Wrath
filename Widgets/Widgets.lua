@@ -12,19 +12,34 @@ local LCG = LibStub("LibCustomGlow-1.0-Cell")
 -- Color
 -----------------------------------------
 local colors = {
-    grey = {s="|cFFB2B2B2", t={0.7, 0.7, 0.7}},
-    yellow = {s="|cFFFFD100", t= {1, 0.82, 0}},
-    orange = {s="|cFFFFC0CB", t= {1, 0.65, 0}},
-    firebrick = {s="|cFFFF3030", t={1, 0.19, 0.19}},
-    skyblue = {s="|cFF00CCFF", t={0, 0.8, 1}},
-    chartreuse = {s="|cFF80FF00", t={0.5, 1, 0}},
+	grey = {s="|cFFB2B2B2", t={0.7, 0.7, 0.7}},
+	yellow = {s="|cFFFFD100", t= {1, 0.82, 0}},
+	orange = {s="|cFFFFC0CB", t= {1, 0.65, 0}},
+	firebrick = {s="|cFFFF3030", t={1, 0.19, 0.19}},
+	skyblue = {s="|cFF00CCFF", t={0, 0.8, 1}},
+	chartreuse = {s="|cFF80FF00", t={0.5, 1, 0}},
 }
 
+--[[
 local class = select(2, UnitClass("player"))
 local accentColor = {s="|cCCB2B2B2", t={0.7, 0.7, 0.7}}
 if class then
     accentColor.t[1], accentColor.t[2], accentColor.t[3], accentColor.s = RAID_CLASS_COLORS[class].r, RAID_CLASS_COLORS[class].g, RAID_CLASS_COLORS[class].b, RAID_CLASS_COLORS[class].colorStr
     accentColor.s = "|c"..accentColor.s
+end
+]]
+local function RGBToColorStr(r, g, b)
+	return string.format("FF%02X%02X%02X", r * 255, g * 255, b * 255)
+end
+
+
+local class = select(2, UnitClass("player"))
+local accentColor = {s="|cFFB2B2B2", t={0.7, 0.7, 0.7}}
+
+if class and RAID_CLASS_COLORS[class] then
+	local c = RAID_CLASS_COLORS[class]
+	accentColor.t[1], accentColor.t[2], accentColor.t[3] = c.r, c.g, c.b
+	accentColor.s = "|c" .. RGBToColorStr(c.r, c.g, c.b)
 end
 
 -----------------------------------------
