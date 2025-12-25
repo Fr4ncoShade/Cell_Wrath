@@ -67,6 +67,8 @@ local barAnimationType, highlightEnabled, predictionEnabled
 local absorbEnabled, absorbInvertColor
 local shieldEnabled, overshieldEnabled, overshieldReverseFillEnabled
 
+local HealComm = LibStub and LibStub("LibHealComm-4.0", true)
+
 local POWER_WORD_SHIELD_NAME = GetSpellInfo(17) or "Power Word: Shield"
 local WEAKENED_SOUL_NAME = GetSpellInfo(6788) or "Weakened Soul"
 
@@ -2015,12 +2017,27 @@ local function UnitButton_UpdateHealPrediction(self)
     end
 
     local unit = self.states.displayedUnit
-    if not unit then return end
+    if not unit then
+		return
+	end
 
-    local value = UnitGetIncomingHeals(unit) or 0
-    -- print("[Cell Debug] Native API:", unit, "Value:", value)
+    --local value = UnitGetIncomingHeals(unit) or 0
+    local value = 0
+	
+	if HealComm then
+		local unitGUID = UnitGUID(unit)
+		if unitGUID then
+			local healAmount = HealComm:GetHealAmount(unitGUID, HealComm.ALL_HEALS) or 0
+			--local healModifier = HealComm:GetHealModifier(unitGUID) or 1
+			--value = healAmount * healModifier
+		end
+	end
 
     if value == 0 then
+		value = UnitGetIncomingHeals and UnitGetIncomingHeals(unit) or 0
+    end
+	
+	if value == 0 then
         self.widgets.incomingHeal:Hide()
         return
     end
