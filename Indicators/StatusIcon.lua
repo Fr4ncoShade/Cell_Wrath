@@ -81,7 +81,11 @@ function I.CreateStatusIcon(parent)
     parent.indicators.statusIcon = statusIcon
     statusIcon:Hide()
 
-    statusIcon:SetIgnoreParentAlpha(true)
+    --statusIcon:SetIgnoreParentAlpha(true)
+	if statusIcon.SetIgnoreParentAlpha then
+		statusIcon:SetIgnoreParentAlpha(true)
+	end
+
 
     statusIcon.tex = statusIcon:CreateTexture(nil, "OVERLAY")
     statusIcon.tex:SetAllPoints(statusIcon)

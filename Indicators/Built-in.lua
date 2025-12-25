@@ -1402,7 +1402,11 @@ end
 function I.CreateStatusText(parent)
     local statusText = CreateFrame("Frame", parent:GetName().."StatusText", parent.widgets.indicatorFrame)
     parent.indicators.statusText = statusText
-    statusText:SetIgnoreParentAlpha(true)
+    --statusText:SetIgnoreParentAlpha(true)
+	if statusText.SetIgnoreParentAlpha then
+		statusText:SetIgnoreParentAlpha(true)
+	end
+
     statusText:Hide()
 
     statusText.parent = parent
@@ -1925,7 +1929,11 @@ function I.CreateReadyCheckIcon(parent)
     local readyCheckIcon = CreateFrame("Frame", parent:GetName().."ReadyCheckIcon", parent.widgets.indicatorFrame)
     parent.indicators.readyCheckIcon = readyCheckIcon
     readyCheckIcon:Hide()
-    readyCheckIcon:SetIgnoreParentAlpha(true)
+	--readyCheckIcon:SetIgnoreParentAlpha(true)
+	if readyCheckIcon.SetIgnoreParentAlpha then
+		readyCheckIcon:SetIgnoreParentAlpha(true)
+	end
+
 
     readyCheckIcon.tex = readyCheckIcon:CreateTexture(nil, "ARTWORK")
     readyCheckIcon.tex:SetAllPoints(readyCheckIcon)
