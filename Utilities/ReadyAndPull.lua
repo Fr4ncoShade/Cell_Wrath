@@ -154,10 +154,9 @@ readyBtn:RegisterForClicks("LeftButtonDown", "RightButtonDown")
 readyBtn:SetScript("OnClick", function(self, button)
     if button == "LeftButton" then
         DoReadyCheck()
-    else
-        InitiateRolePoll()
     end
 end)
+
 
 local ready = {}
 readyBtn:SetScript("OnEvent", function(self, event, arg1, arg2)
