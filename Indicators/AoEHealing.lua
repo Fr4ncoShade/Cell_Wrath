@@ -1,3 +1,4 @@
+
 local _, Cell = ...
 local L = Cell.L
 ---@type CellFuncs
@@ -8,7 +9,6 @@ local I = Cell.iFuncs
 -------------------------------------------------
 -- CreateAoEHealing -- not support for npc
 -------------------------------------------------
--- Retail has CombatLogGetCurrentEventInfo; Wrath passes the values directly
 local function GetCLEUInfo(...)
     if CombatLogGetCurrentEventInfo then
         return CombatLogGetCurrentEventInfo()
@@ -25,51 +25,43 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event ~= "COMBAT_LOG_EVENT_UNFILTERED" then return end
 
-    -- WotLK 3.3.5a: sourceRaidFlags and destRaidFlags don't exist (added in 4.2.0)
-    local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellId, spellName
-    if CombatLogGetCurrentEventInfo then
-        -- Retail/Cata+ has sourceRaidFlags and destRaidFlags
-        local sourceRaidFlags, destRaidFlags
-        timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName = GetCLEUInfo(...)
-    else
-        -- WotLK 3.3.5a: No sourceRaidFlags/destRaidFlags
-        timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellId, spellName = GetCLEUInfo(...)
-    end
-    -- if subevent == "SPELL_SUMMON" then print(subevent, sourceName, sourceGUID, destName, destGUID, spellName) end
+    local timestamp, subevent, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, spellId, spellName = GetCLEUInfo(...)
+
+    -- SPELL_SUMMON
     if subevent == "SPELL_SUMMON" then
-        -- print(sourceGUID == Cell.vars.playerGUID, destGUID, spellName, spellId)
         if sourceGUID == Cell.vars.playerGUID and destGUID and I.IsAoEHealing(spellName, spellId) then
             local duration = I.GetSummonDuration(spellName)
             if duration then
-                playerSummoned[destGUID] = GetTime() + duration -- expirationTime
+                playerSummoned[destGUID] = GetTime() + duration
                 C_Timer.After(duration, function()
                     playerSummoned[destGUID] = nil
                 end)
             end
         end
-        -- texplore(playerSummoned)
     end
-    -- if (subevent == "SPELL_HEAL" or subevent == "SPELL_PERIODIC_HEAL") then print(subevent, sourceName, sourceGUID, destName, spellId, spellName) end
+
+    -- HEAL EVENTS
     if subevent == "SPELL_HEAL" or subevent == "SPELL_PERIODIC_HEAL" then
         if destGUID then
-            -- print(sourceGUID == Cell.vars.playerGUID, sourceGUID, playerSummoned[sourceGUID])
             if (sourceGUID == Cell.vars.playerGUID and I.IsAoEHealing(spellName, spellId)) or playerSummoned[sourceGUID] then
                 F.HandleUnitButton("guid", destGUID, Display)
             end
         end
     end
 end)
-
+--[[
 function I.CreateAoEHealing(parent)
     local aoeHealing = CreateFrame("Frame", parent:GetName().."AoEHealing", parent.widgets.indicatorFrame)
     parent.indicators.aoeHealing = aoeHealing
+	--print("AOE Create:", parent:GetName())
     aoeHealing:SetPoint("TOPLEFT", parent.widgets.healthBar)
     aoeHealing:SetPoint("TOPRIGHT", parent.widgets.healthBar)
     aoeHealing:Hide()
 
     aoeHealing.tex = aoeHealing:CreateTexture(nil, "ARTWORK")
     aoeHealing.tex:SetAllPoints(aoeHealing)
-    aoeHealing.tex:SetTexture(Cell.vars.whiteTexture)
+   -- aoeHealing.tex:SetTexture(Cell.vars.whiteTexture)
+	aoeHealing.tex:SetTexture("Interface\\Buttons\\WHITE8x8")
 
     local ag = aoeHealing:CreateAnimationGroup()
     local a1 = ag:CreateAnimation("Alpha")
@@ -95,13 +87,150 @@ function I.CreateAoEHealing(parent)
     function aoeHealing:SetColor(r, g, b)
         aoeHealing.tex:SetGradient("VERTICAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 0.77))
     end
-
+--
     function aoeHealing:Display()
         -- if ag:IsPlaying() then
         --     ag:Restart()
         -- else
             ag:Play()
         -- end
+    end
+end
+]]
+--[[
+function I.CreateAoEHealing(parent)
+    local aoeHealing = CreateFrame("Frame", parent:GetName().."AoEHealing", parent.widgets.indicatorFrame)
+    parent.indicators.aoeHealing = aoeHealing
+
+    aoeHealing:SetPoint("TOPLEFT", parent.widgets.healthBar)
+    aoeHealing:SetPoint("TOPRIGHT", parent.widgets.healthBar)
+    aoeHealing:Hide()
+-------------------------------------------------
+
+    local bg = aoeHealing:CreateTexture(nil, "BACKGROUND")
+    aoeHealing.bg = bg
+    bg:SetAllPoints(aoeHealing)
+    bg:SetTexture("Interface\\Buttons\\WHITE8x8")
+
+    function aoeHealing:SetColor(r, g, b)
+        -- градиент задаём ОДИН РАЗ, не во время анимации
+        bg:SetGradientAlpha(
+            "VERTICAL",
+            r, g, b, 0,
+            r, g, b, 0.77
+        )
+    end
+ -------------------------------------------------
+
+    local overlay = aoeHealing:CreateTexture(nil, "ARTWORK")
+    aoeHealing.overlay = overlay
+    overlay:SetAllPoints(aoeHealing)
+    overlay:SetTexture("Interface\\Buttons\\WHITE8x8")
+    overlay:SetVertexColor(1, 1, 1, 0)
+
+    local ag = overlay:CreateAnimationGroup()
+
+    local a1 = ag:CreateAnimation("Alpha")
+    a1:SetFromAlpha(0)
+    a1:SetToAlpha(0)
+    a1:SetDuration(0.5)
+    a1:SetOrder(1)
+	a1:SetSmoothing("OUT")
+
+    local a2 = ag:CreateAnimation("Alpha")
+    a2:SetFromAlpha(1)
+    a2:SetToAlpha(0)
+    a2:SetDuration(0.5)
+    a2:SetOrder(2)
+    a2:SetSmoothing("IN")
+
+    ag:SetScript("OnPlay", function()
+        aoeHealing:Show()
+        --overlay:SetAlpha(1)
+    end)
+
+    ag:SetScript("OnFinished", function()
+        aoeHealing:Hide()
+    end)
+
+    function aoeHealing:Display()
+        if ag:IsPlaying() then
+            ag:Restart()
+        else
+            ag:Play()
+        end
+    end
+end
+]]
+function I.CreateAoEHealing(parent)
+    local aoeHealing = CreateFrame("Frame", parent:GetName().."AoEHealing", parent.widgets.indicatorFrame)
+    parent.indicators.aoeHealing = aoeHealing
+
+    aoeHealing:SetPoint("TOPLEFT", parent.widgets.healthBar)
+    aoeHealing:SetPoint("TOPRIGHT", parent.widgets.healthBar)
+    aoeHealing:Hide()
+
+    local bg = aoeHealing:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(aoeHealing)
+    bg:SetTexture("Interface\\Buttons\\WHITE8x8")
+    aoeHealing.bg = bg
+
+    local r, g, b = 1, 1, 1
+    local intensity = 1
+
+    local function applyGradient()
+        local alphaTop = 0.85 * intensity
+        local alphaBottom = 0.15 * intensity
+
+        bg:SetGradientAlpha(
+            "VERTICAL",
+            r, g, b, alphaBottom,
+            r, g, b, alphaTop
+        )
+
+        aoeHealing:SetAlpha(0.3 + intensity * 0.7)
+    end
+
+    local ag = aoeHealing:CreateAnimationGroup()
+
+    local tick = ag:CreateAnimation("Alpha")
+    tick:SetFromAlpha(1)
+    tick:SetToAlpha(1)
+    tick:SetDuration(1.5)
+    tick:SetSmoothing("NONE")
+
+    tick:SetScript("OnUpdate", function(self, elapsed)
+        if intensity <= 0 then return end
+
+        intensity = intensity - elapsed * 0.7
+        if intensity < 0 then intensity = 0 end
+
+        applyGradient()
+
+        if intensity == 0 then
+            aoeHealing:Hide()
+        end
+    end)
+
+    ag:SetScript("OnPlay", function()
+        aoeHealing:Show()
+        intensity = 1
+        applyGradient()
+    end)
+
+    ag:SetScript("OnFinished", function()
+        aoeHealing:Hide()
+    end)
+
+    function aoeHealing:SetColor(rr, gg, bb)
+        r, g, b = rr, gg, bb
+        intensity = 1
+        applyGradient()
+    end
+
+    function aoeHealing:Display()
+        ag:Stop()
+        ag:Play()
     end
 end
 
