@@ -8,14 +8,6 @@ local P = Cell.pixelPerfectFuncs
 
 CELL_SUMMON_ICONS_ENABLED = false
 
--- Retail has CombatLogGetCurrentEventInfo; Wrath passes args directly
-local function GetCLEUInfo(...)
-    if CombatLogGetCurrentEventInfo then
-        return CombatLogGetCurrentEventInfo()
-    end
-    return ...
-end
-
 -------------------------------------------------
 -- event
 -------------------------------------------------
