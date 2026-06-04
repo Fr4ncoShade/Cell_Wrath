@@ -158,11 +158,7 @@ function I.UpdateStatusIcon_Resurrection(button, start, duration)
     end
 
     if not start then
-        local dur, expir = select(5, F.FindAuraById(unit, "DEBUFF", 160029)) -- battle res
-        if dur then --! check Resurrecting debuff
-            start = expir - dur
-            duration = dur
-        elseif rez[guid] then --! check saved data (unit button changed)
+        if rez[guid] then --! check saved data (unit button changed)
             start = rez[guid][1]
             duration = rez[guid][2]
         else
