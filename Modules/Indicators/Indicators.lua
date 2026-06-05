@@ -2194,9 +2194,6 @@ LoadIndicatorList = function()
                 else
                     LCG.PixelGlow_Start(i)
                 end
-                if i._PixelGlow then
-                    i._PixelGlow:SetIgnoreParentAlpha(true)
-                end
             end
         else
             if i:IsObjectType("Texture") or i:IsObjectType("FontString") then
