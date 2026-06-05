@@ -79,9 +79,11 @@ local function CreateRTPane()
             end
         end
         Cell.Fire("UpdateTools", "buffTracker")
-    end, L["Buff Tracker"].." |cffff7727"..L["MODERATE CPU USAGE"], L["Check if your group members need some raid buffs"],
-    Cell.isRetail and L["|cffffb5c5Left-Click:|r cast the spell"] or "|cffffb5c5(Shift)|r "..L["|cffffb5c5Left-Click:|r cast the spell"],
-    L["|cffffb5c5Right-Click:|r report unaffected"])
+    end,
+	L["Buff Tracker"].." |cffff7727"..L["MODERATE CPU USAGE"],
+	L["Check if your group members need some raid buffs"],
+	L["|cffffb5c5Left/Right-Click:|r cast the spell"],
+	L["|cffffb5c5Shift+Left-Click:|r report missing buffs"])
     -- L["Use |cFFFFB5C5/cell buff X|r to set icon size"],
     -- "|cffffffff" .. L["Current"]..": |cFFFFB5C5"..CellDB["tools"]["buffTracker"][3])
     buffCB:SetPoint("TOPLEFT", reportCB, "BOTTOMLEFT", 0, -15)
