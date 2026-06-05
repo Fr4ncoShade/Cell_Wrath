@@ -1563,12 +1563,14 @@ indicatorSettings = {
 ["healthText"] = {"tip:Health_Text_TIP", "enabled", "healthFormat", "position", "frameLevel", "font-noOffset"},
 ["powerText"] = {"enabled", "color-power", "powerFormat", "powerTextFilters", "checkbutton:hideIfEmptyOrFull", "position", "frameLevel", "font-noOffset"},
 ["statusIcon"] = {
-    -- "|A:dungeonskull:18:18|a "..
-    "|TInterface\\LFGFrame\\LFG-Eye:18:18:0:0:512:256:72:120:72:120|t "..
-    "|TInterface\\RaidFrame\\Raid-Icon-Rez:18:18|t "..
-    "|TInterface\\TargetingFrame\\UI-PhasingIcon:18:18:0:0:31:31:3:28:3:28|t "..
-    "|A:horde_icon_and_flag-dynamicIcon:18:18|a "..
-    "|A:alliance_icon_and_flag-dynamicIcon:18:18|a ", "enabled", "size-square", "position", "frameLevel"},
+	"|TInterface\\AddOns\\Cell_Wrath\\Media\\Roles\\Raid-Icon-Rez:18:18|t "..
+    "|TInterface\\Icons\\INV_BannerPVP_01:18:18|t "..
+    "|TInterface\\Icons\\INV_BannerPVP_02:18:18|t ",
+    "enabled",
+    "size-square",
+    "position",
+    "frameLevel"
+},
 ["roleIcon"] = {"enabled", "checkbutton:hideDamager", "size-square", "roleTexture", "position", "frameLevel"},
 ["leaderIcon"] = {"enabled", "checkbutton:hideInCombat", "size-square", "position"},
 ["combatIcon"] = {"enabled", "checkbutton:onlyEnableNotInCombat", "size-square", "position", "frameLevel"},
