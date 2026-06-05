@@ -11,7 +11,6 @@ L["[Ctrl+Left-Click] to reset these settings"] = "[Ctrl+Левый Клик] д�
 L["|cff1Aff1AYes|r - Overwrite"] = "|cff1Aff1AДа|r - Перезаписать"
 L["|cffff1A1ANo|r - Create New"] = "|cffff1A1AНет|r - Создать Новый"
 L["|cffffb5c5Left/Right-Click:|r cast the spell"] = "|cffffb5c5ЛКМ/ПКМ:|r использовать заклинание"
-L["|cffffb5c5Right-Click:|r report unaffected"] = "|cffffb5c5ПКМ:|r сообщить об отсутствующих баффах"
 L["|cffffb5c5Shift+Left-Click:|r report missing buffs"] = "|cffffb5c5Шифт+ЛКМ:|r сообщить об отсутствующих баффах"
 L["+ Stack"] = "+ Стак"
 L["+ Stack & Duration"] = "+ Стак & Длительность"
