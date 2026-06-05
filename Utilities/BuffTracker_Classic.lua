@@ -667,7 +667,8 @@ local function ShowMissingBuffs(unit)
             I.ShowMissingBuff(unit, buffsProvidedByMe[buff][2])
         end
     else
-        I.ShowMissingBuff(unit, 254882)
+        --I.ShowMissingBuff(unit, 254882)
+		I.ShowMissingBuff(unit, "Interface\\Icons\\spell_chargepositive")
     end
 end
 
