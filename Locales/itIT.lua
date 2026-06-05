@@ -15,8 +15,8 @@ L["|cff1Aff1AYes|r - Overwrite"] = [=[|cff1Aff1ASi|r - Sovrascrivi
 
 ]=]
 L["|cffff1A1ANo|r - Create New"] = "|cffff1A1ANo|r - Crea Nuovo"
-L["|cffffb5c5Left-Click:|r cast the spell"] = "|cffffb5c5Click Sinistro:|r utilizza la spell"
-L["|cffffb5c5Right-Click:|r report unaffected"] = "|cffffb5c5Click Destro:|r comunica buff mancante"
+L["|cffffb5c5Left/Right-Click:|r cast the spell"] = "|cffffb5c5Click Sinistro/Destro:|r utilizza la spell"
+L["|cffffb5c5Shift+Left-Click:|r report missing buffs"] = "|cffffb5c5Click Sinistro:|r comunica buff mancante"
 L["+ Stack"] = "+ Stack"
 L["+ Stack & Duration"] = "+ Stack e Durata"
 L["A 0-40 integer is required."] = "È necessario un numero intero 0-40."
