@@ -205,6 +205,7 @@ end
 -------------------------------------------------
 -- mouse wheel & keyboard
 -------------------------------------------------
+
 local wrapFrame = CreateFrame("Frame", "CellWrapFrame", nil, "SecureHandlerStateTemplate")
 wrapFrame:SetAttribute("_onstate-mouseoverstate", [[
     -- print("mouseoverstate", newstate)
@@ -235,153 +236,85 @@ wrapFrame:SetAttribute("_onstate-combatstate", [[
 RegisterStateDriver(wrapFrame, "combatstate", "[combat] true; false")
 
 local SetBindingClicks
-if Cell.isRetail then
-    SetBindingClicks = function (b)
-        b:SetAttribute("_onenter", [[
-            -- print("_onenter")
-            self:ClearBindings()
-            self:Run(self:GetAttribute("snippet"))
+SetBindingClicks = function(b, snippet)
+    snippet = snippet or ""
 
-            -- self:SetBindingClick(true, "SHIFT-MOUSEWHEELUP", self, "shiftSCROLLUP")
-            -- FIXME: --! 如果游戏按键设置（比如“视角”“载具控制”）中绑定了滚轮，那么 self:SetBindingClick(true, "MOUSEWHEELUP", self, "SCROLLUP") 会失效
-            -- self:SetBindingClick(true, "MOUSEWHEELUP", self, "SCROLLUP")
-            -- self:SetBindingClick(true, "MOUSEWHEELDOWN", self, "SCROLLDOWN")
+    local onEnter = [[
+        -- print("_onenter")
+        self:ClearBindings()
 
-            -- self:SetBindingClick(true, "SHIFT-B", self, "shiftB")
-            -- self:SetBindingClick(true, "SHIFT-C", self, "shiftC")
+]] .. snippet .. [[
 
-            --! update click-casting unit
-            -- local attrs = self:GetAttribute("cell")
-            -- -- print(attrs)
-            -- if attrs then
-            --     for _, k in pairs(table.new(strsplit("|", attrs))) do
-            --         self:SetAttribute(k, string.gsub(self:GetAttribute(k), "@%w+", "@"..self:GetAttribute("unit")))
-            --     end
-            -- end
-
-            --! update togglemenu
-            local menuKey = self:GetAttribute("menu")
-            if menuKey then
-                if PlayerInCombat() then
-                    self:SetAttribute(menuKey, nil)
-                else
-                    self:SetAttribute(menuKey, "togglemenu")
-                end
+        --! vehicle
+        local unit = self:GetAttribute("unit")
+        local vehicle
+        if UnitHasVehicleUI(unit) then
+            if unit == "player" then
+                vehicle = "pet"
+            elseif strfind(unit, "^party%d+$") then
+                vehicle = string.gsub(unit, "party", "partypet")
+            elseif strfind(unit, "^raid%d+$") then
+                vehicle = string.gsub(unit, "raid", "raidpet")
             end
-        ]])
+        end
 
-        wrapFrame:WrapScript(b, "OnEnter", [[
-            -- print("OnEnter")
-            if mouseoverbutton then mouseoverbutton:ClearBindings() end --! NOTE: 鼠标放在过远单位上->被挡住->移走->移至可用单位再移出，会发现之前的不可用单位的按键绑定仍未取消
-            mouseoverbutton = self
-        ]])
-
-        --! NOTE: if another frame shows in front of b, _onleave will NOT trigger. Use WrapScript to solve this issue.
-        b:SetAttribute("_onleave", [[
-            -- print("_onleave")
-            self:ClearBindings()
-        ]])
-
-        -- wrapFrame:WrapScript(b, "OnLeave", [[
-        --     -- print("OnLeave")
-        --     mouseoverbutton = nil
-        -- ]])
-
-        b:SetAttribute("_onhide", [[
-            self:ClearBindings()
-        ]])
-    end
-else
-    SetBindingClicks = function(b)
-        b:SetAttribute("_onenter", [[
-            -- print("_onenter")
-            self:ClearBindings()
-            -- WotLK Fix: :Run() doesn't exist in WotLK's restricted execution
-            -- self:Run(self:GetAttribute("snippet"))
-
-            -- self:SetBindingClick(true, "SHIFT-MOUSEWHEELUP", self, "shiftSCROLLUP")
-            -- FIXME: --! 如果游戏按键设置（比如“视角”“载具控制”）中绑定了滚轮，那么 self:SetBindingClick(true, "MOUSEWHEELUP", self, "SCROLLUP") 会失效
-            -- self:SetBindingClick(true, "MOUSEWHEELUP", self, "SCROLLUP")
-            -- self:SetBindingClick(true, "MOUSEWHEELDOWN", self, "SCROLLDOWN")
-
-            -- self:SetBindingClick(true, "SHIFT-B", self, "shiftB")
-            -- self:SetBindingClick(true, "SHIFT-C", self, "shiftC")
-
-            --! vehicle
-            local unit = self:GetAttribute("unit")
-            local vehicle
-            if UnitHasVehicleUI(unit) then
-                if unit == "player" then
-                    vehicle = "pet"
-                elseif strfind(unit, "^party%d+$") then
-                    vehicle = string.gsub(unit, "party", "partypet")
-                elseif strfind(unit, "^raid%d+$") then
-                    vehicle = string.gsub(unit, "raid", "raidpet")
-                end
+        --! update click-casting unit
+        local clickCastingUnit = vehicle or unit
+        local attrs = self:GetAttribute("cell")
+        if attrs then
+            for _, k in pairs(table.new(strsplit("|", attrs))) do
+                self:SetAttribute(k, string.gsub(self:GetAttribute(k), "@%w+", "@"..clickCastingUnit))
             end
+        end
 
-            --! update click-casting unit
-            local clickCastingUnit = vehicle or unit
-            local attrs = self:GetAttribute("cell")
-            -- print(attrs)
-            if attrs then
-                for _, k in pairs(table.new(strsplit("|", attrs))) do
-                    self:SetAttribute(k, string.gsub(self:GetAttribute(k), "@%w+", "@"..clickCastingUnit))
-                    -- print(self:GetAttribute(k))
-                end
+        --! update togglemenu
+        local menuKey = self:GetAttribute("menu")
+        if menuKey then
+            if UnitAffectingCombat("player") then
+                self:SetAttribute(menuKey, nil)
+            else
+                self:SetAttribute(menuKey, "togglemenu")
             end
+        end
+    ]]
 
-            --! update togglemenu
-            local menuKey = self:GetAttribute("menu")
-            if menuKey then
-                if PlayerInCombat() then
-                    self:SetAttribute(menuKey, nil)
-                else
-                    self:SetAttribute(menuKey, "togglemenu")
-                end
-            end
-        ]])
+    b:SetAttribute("_onenter", onEnter)
 
-        wrapFrame:WrapScript(b, "OnEnter", [[
-            -- print("OnEnter")
-            if mouseoverbutton then
-                --! NOTE: 鼠标放在过远单位上->被挡住->移走->移至可用单位再移出，会发现之前的不可用单位的按键绑定仍未取消
-                mouseoverbutton:ClearBindings()
+    wrapFrame:WrapScript(b, "OnEnter", [[
+        -- print("OnEnter")
+        if mouseoverbutton then
+            --! NOTE: mouse moved from inaccessible unit to another frame,
+            -- bindings from previous button may remain active
+            mouseoverbutton:ClearBindings()
 
-                --! vehicle (previous button)
-                local oldUnit = mouseoverbutton:GetAttribute("oldUnit")
-                if oldUnit then
-                    -- print("wrap restore unit")
-                    mouseoverbutton:SetAttribute("unit", oldUnit)
-                    mouseoverbutton:SetAttribute("oldUnit", nil)
-                end
-            end
-            mouseoverbutton = self
-        ]])
-
-        --! NOTE: if another frame shows in front of b, _onleave will NOT trigger. Use WrapScript to solve this issue.
-        b:SetAttribute("_onleave", [[
-            -- print("_onleave")
-            self:ClearBindings()
-        ]])
-
-        -- wrapFrame:WrapScript(b, "OnLeave", [[
-        --     -- print("OnLeave")
-        --     mouseoverbutton = nil
-        -- ]])
-
-        b:SetAttribute("_onhide", [[
-            self:ClearBindings()
-
-            --! vehicle
-            local oldUnit = self:GetAttribute("oldUnit")
+            --! vehicle (previous button)
+            local oldUnit = mouseoverbutton:GetAttribute("oldUnit")
             if oldUnit then
-                -- print("restore unit")
-                self:SetAttribute("oldUnit", nil)
-                self:SetAttribute("unit", oldUnit)
+                -- print("wrap restore unit")
+                mouseoverbutton:SetAttribute("unit", oldUnit)
+                mouseoverbutton:SetAttribute("oldUnit", nil)
             end
-        ]])
-    end
+        end
+        mouseoverbutton = self
+    ]])
+
+    --! NOTE: if another frame shows in front of b, _onleave will NOT trigger.
+    b:SetAttribute("_onleave", [[
+        -- print("_onleave")
+        self:ClearBindings()
+    ]])
+
+    b:SetAttribute("_onhide", [[
+        self:ClearBindings()
+
+        --! vehicle
+        local oldUnit = self:GetAttribute("oldUnit")
+        if oldUnit then
+            -- print("restore unit")
+            self:SetAttribute("oldUnit", nil)
+            self:SetAttribute("unit", oldUnit)
+        end
+    ]])
 end
 
 -- FIXME: hope BLZ fix this bug
@@ -527,35 +460,21 @@ local function ApplyClickCastings(b)
                 spellName = spellName .. F.GetRankSuffix(rank)
             end
 
-            --! NOTE: fix Primordial Wave
-            -- NOTE: only Necrolord shamans have this issue
-            -- https://www.wowhead.com/spell=375982/primordial-wave#comments:id=5484251
-            if t[3] == 428332 then
-                local subtext = C_Spell.GetSpellSubtext(428332)
-                spellName = spellName .. "(" .. (subtext or EXPANSION_NAME8) .. ")"
-            end
-
             local condition = ""
             if not F.IsSoulstone(spellName) then
                 condition = F.IsResurrectionForDead(spellName) and ",dead" or ",nodead"
             end
 
-            local unit = Cell.isRetail and "@mouseover" or "@cell"
+            local unit = "@cell"
 
             -- "sMaRt" resurrection
             local sMaRt = ""
             if smartResurrection ~= "disabled" and not (F.IsResurrectionForDead(spellName) or F.IsSoulstone(spellName)) then
                 if strfind(smartResurrection, "^normal") then
                     local normalResurrection = F.GetNormalResurrection(Cell.vars.playerClass)
-                    if normalResurrection then
-                        if Cell.isRetail then -- mass resurrections
-                            for cond, spell in pairs(normalResurrection) do
-                                sMaRt = sMaRt .. ";["..unit..",dead,nocombat,"..cond.."] "..spell
-                            end
-                        else
-                            sMaRt = sMaRt .. ";["..unit..",dead,nocombat] "..normalResurrection
-                        end
-                    end
+					 if normalResurrection then
+						sMaRt = sMaRt .. ";["..unit..",dead,nocombat] "..normalResurrection
+					end
                 end
                 if strfind(smartResurrection, "combat$") then
                     if F.GetCombatResurrection(Cell.vars.playerClass) then
@@ -565,13 +484,13 @@ local function ApplyClickCastings(b)
             end
 
             --! NOTE: cancels the "blue glowing hand" cursor (cancel the target selection)
-            local fix = t[3] == 370665 and "" or "\n/stopspelltarget"
+			local fix = "\n/stopspelltarget"
 
             if (alwaysTargeting == "left" and bindKey == "type1") or alwaysTargeting == "any" then
                 b:SetAttribute(bindKey, "macro")
                 local attr = string.gsub(bindKey, "type", "macrotext")
                 b:SetAttribute(attr, "/tar ["..unit.."]\n/cast ["..unit..condition.."] "..spellName..sMaRt..fix)
-                if not Cell.isRetail then UpdatePlaceholder(b, attr) end
+                UpdatePlaceholder(b, attr)
             else
                 -- NOTE: "spell" is not ideal, 在无效/过远的目标上会处于“等待选中目标”的状态，即鼠标指针有一圈灰/蓝色材质
                 -- local attr = string.gsub(bindKey, "type", "spell")
@@ -583,7 +502,7 @@ local function ApplyClickCastings(b)
                 else
                     b:SetAttribute(attr, "/cast ["..unit..condition.."] "..spellName..sMaRt..fix)
                 end
-                if not Cell.isRetail then UpdatePlaceholder(b, attr) end
+                UpdatePlaceholder(b, attr)
             end
         elseif t[2] == "macro" then
             local attr = string.gsub(bindKey, "type", "macro")
@@ -603,10 +522,7 @@ end
 function F.UpdateClickCastOnFrame(frame, snippet)
     if frame then
         ClearClickCastings(frame)
-        -- update bindingClicks
-        frame:SetAttribute("snippet", snippet)
-        SetBindingClicks(frame)
-        -- load db and set attribute
+        SetBindingClicks(frame, snippet)
         ApplyClickCastings(frame)
     end
 end
