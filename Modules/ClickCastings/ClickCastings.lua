@@ -460,10 +460,14 @@ local function ApplyClickCastings(b)
                 spellName = spellName .. F.GetRankSuffix(rank)
             end
 
-            local condition = ""
-            if not F.IsSoulstone(spellName) then
-                condition = F.IsResurrectionForDead(spellName) and ",dead" or ",nodead"
-            end
+			local condition = ""
+			if not F.IsSoulstone(spellName) then
+				if F.IsResurrectionForDead(spellName) then
+					condition = ",help,dead"
+				else
+					condition = ",help,nodead"
+				end
+			end
 
             local unit = "@cell"
 
@@ -474,11 +478,13 @@ local function ApplyClickCastings(b)
                     local normalResurrection = F.GetNormalResurrection(Cell.vars.playerClass)
 					 if normalResurrection then
 						sMaRt = sMaRt .. ";["..unit..",dead,nocombat] "..normalResurrection
+						--sMaRt = sMaRt .. ";["..unit..",help,dead,nocombat] "..normalResurrection
 					end
                 end
                 if strfind(smartResurrection, "combat$") then
                     if F.GetCombatResurrection(Cell.vars.playerClass) then
                         sMaRt = sMaRt .. ";["..unit..",dead,combat] "..F.GetCombatResurrection(Cell.vars.playerClass)
+						--sMaRt = sMaRt .. ";["..unit..",help,dead,combat] "..F.GetCombatResurrection(Cell.vars.playerClass)
                     end
                 end
             end
