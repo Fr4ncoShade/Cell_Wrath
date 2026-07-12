@@ -2301,15 +2301,6 @@ local IsSpellKnown = IsSpellKnown
 -- local GetSpellBookItemName = GetSpellBookItemName
 -- local BOOKTYPE_SPELL = BOOKTYPE_SPELL
 
-local UnitInSamePhase
-if Cell.isRetail then
-    UnitInSamePhase = function(unit)
-        return not UnitPhaseReason(unit)
-    end
-else
-    UnitInSamePhase = UnitInPhase
-end
-
 local _, playerClass = UnitClassBase("player")
 
 local friendSpells = {
@@ -2489,9 +2480,9 @@ function F.IsInRange(unit, check)
 
     else
         if UnitCanAssist("player", unit) then -- or UnitCanCooperate("player", unit)
-            if not (UnitIsConnected(unit) and UnitInSamePhase(unit)) then
-                return false
-            end
+			if not UnitIsConnected(unit) then
+				return false
+			end
 
             if UnitIsDead(unit) then
                 if spell_dead then
@@ -2553,7 +2544,6 @@ local function GetResult1()
         "\nUnitCanCooperate: " .. (UnitCanCooperate("player", "target") and "true" or "false") ..
         "\nUnitCanAttack: " .. (UnitCanAttack("player", "target") and "true" or "false") ..
         "\n\nUnitIsConnected: " .. (UnitIsConnected("target") and "true" or "false") ..
-        "\nUnitInSamePhase: " .. (UnitInSamePhase("target") and "true" or "false") ..
         "\nUnitIsDead: " .. (UnitIsDead("target") and "true" or "false") ..
         "\n\nspell_friend: " .. (spell_friend and (spell_friend .. " " .. (UnitInSpellRange(spell_friend, "target") and "true" or "false")) or "none") ..
         "\nspell_dead: " .. (spell_dead and (spell_dead .. " " .. (UnitInSpellRange(spell_dead, "target") and "true" or "false")) or "none") ..
