@@ -2305,24 +2305,19 @@ local _, playerClass = UnitClassBase("player")
 
 local friendSpells = {
     -- ["DEATHKNIGHT"] = 47541,
-    -- ["DEMONHUNTER"] = ,
-    ["DRUID"] = (Cell.isWrath or Cell.isVanilla) and 5185 or 8936, -- 治疗之触 / 愈合
-    -- FIXME: [361469 活化烈焰] 会被英雄天赋 [431443 时序烈焰] 替代，但它而且有问题
-    -- IsSpellInRange 始终返回 nil
-    ["EVOKER"] = 355913, -- 翡翠之花
+    ["DRUID"] = (Cell.isWrath or Cell.isVanilla) and 5185 or 8936,
     -- ["HUNTER"] = 136,
-    ["MAGE"] = 1459, -- 奥术智慧 / 奥术光辉
-    ["MONK"] = 116670, -- 活血术
-    ["PALADIN"] = Cell.isRetail and 19750 or 635, -- 圣光闪现 / 圣光术
-    ["PRIEST"] = (Cell.isWrath or Cell.isVanilla) and 2050 or 2061, -- 次级治疗术 / 快速治疗
-    -- ["ROGUE"] = Cell.isWrath and 57934,
-    ["SHAMAN"] = Cell.isRetail and 8004 or 331, -- 治疗之涌 / 治疗波
-    ["WARLOCK"] = 5697, -- 无尽呼吸
+    ["MAGE"] = 1459,
+    ["PALADIN"] = 635,
+    ["PRIEST"] = 2061,
+    ["ROGUE"] = 57934,
+    ["SHAMAN"] = 331,
+    ["WARLOCK"] = 5697,
     -- ["WARRIOR"] = 3411,
 }
 
 local deadSpells = {
-    ["EVOKER"] = 361227, -- resurrection range, need separately for evoker
+
 }
 
 local petSpells = {
@@ -2330,31 +2325,23 @@ local petSpells = {
 }
 
 local harmSpells = {
-    ["DEATHKNIGHT"] = 47541, -- 凋零缠绕
-    ["DEMONHUNTER"] = 185123, -- 投掷利刃
-    ["DRUID"] = 5176, -- 愤怒
-    -- FIXME: [361469 活化烈焰] 会被英雄天赋 [431443 时序烈焰] 替代，但它而且有问题
-    -- IsSpellInRange 始终返回 nil
-    ["EVOKER"] = 362969, -- 碧蓝打击
-    ["HUNTER"] = 75, -- 自动射击
-    ["MAGE"] = Cell.isRetail and 116 or 133, -- 寒冰箭 / 火球术
-    ["MONK"] = 117952, -- 碎玉闪电
-    ["PALADIN"] = 20271, -- 审判
-    ["PRIEST"] = Cell.isRetail and 589 or 585, -- 暗言术：痛 / 惩击
-    ["ROGUE"] = 1752, -- 影袭
-    ["SHAMAN"] = Cell.isRetail and 188196 or 403, -- 闪电箭
-    ["WARLOCK"] = 234153, -- 吸取生命
-    ["WARRIOR"] = 355, -- 嘲讽
+    ["DEATHKNIGHT"] = 47541,
+    ["DRUID"] = 5176, -- or 33786 ?
+    ["HUNTER"] = 75,
+    ["MAGE"] = 133, -- or 118 ?
+    ["PALADIN"] = 20271,
+    ["PRIEST"] = 585, -- or 8122 ?
+    ["ROGUE"] = 1752, -- or 2094 ?
+    ["SHAMAN"] = 403, -- 51514 ?
+    ["WARLOCK"] = 234153, -- 5782 ?
+    ["WARRIOR"] = 355,
 }
 
 -- local friendItems = {
 --     ["DEATHKNIGHT"] = 34471,
---     ["DEMONHUNTER"] = 34471,
 --     ["DRUID"] = 34471,
---     ["EVOKER"] = 1180, -- 30y
 --     ["HUNTER"] = 34471,
 --     ["MAGE"] = 34471,
---     ["MONK"] = 34471,
 --     ["PALADIN"] = 34471,
 --     ["PRIEST"] = 34471,
 --     ["ROGUE"] = 34471,
@@ -2365,12 +2352,9 @@ local harmSpells = {
 
 local harmItems = {
     ["DEATHKNIGHT"] = 28767, -- 40y
-    ["DEMONHUNTER"] = 28767, -- 40y
     ["DRUID"] = 28767, -- 40y
-    ["EVOKER"] = 24268, -- 25y
     ["HUNTER"] = 28767, -- 40y
     ["MAGE"] = 28767, -- 40y
-    ["MONK"] = 28767, -- 40y
     ["PALADIN"] = 835, -- 30y
     ["PRIEST"] = 28767, -- 40y
     ["ROGUE"] = 28767, -- 40y
