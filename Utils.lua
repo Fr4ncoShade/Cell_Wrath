@@ -2295,7 +2295,7 @@ local IsSpellInRange = IsSpellInRange
 local IsItemInRange = (C_Spell and C_Item.IsItemInRange) and C_Item.IsItemInRange or IsItemInRange
 local CheckInteractDistance = CheckInteractDistance
 local UnitIsDead = UnitIsDead
-local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
+local IsSpellKnown = IsSpellKnown
 -- local GetSpellTabInfo = GetSpellTabInfo
 -- local GetNumSpellTabs = GetNumSpellTabs
 -- local GetSpellBookItemName = GetSpellBookItemName
@@ -2416,7 +2416,6 @@ local UnitInSpellRange = function(spellName, unit)
 end
 
 local rc = CreateFrame("Frame")
-rc:RegisterEvent("SPELLS_CHANGED")
 
 local spell_friend, spell_pet, spell_harm, spell_dead
 CELL_RANGE_CHECK_FRIENDLY = {}
@@ -2430,22 +2429,22 @@ local function SPELLS_CHANGED()
     spell_dead = CELL_RANGE_CHECK_DEAD[playerClass] or deadSpells[playerClass]
     spell_pet = CELL_RANGE_CHECK_PET[playerClass] or petSpells[playerClass]
 
-    if spell_friend and IsSpellKnownOrOverridesKnown(spell_friend) then
+	if spell_friend and IsSpellKnown (spell_friend) then
         spell_friend = F.GetSpellInfo(spell_friend)
     else
         spell_friend = nil
     end
-    if spell_harm and IsSpellKnownOrOverridesKnown(spell_harm) then
+    if spell_harm and IsSpellKnown(spell_harm) then
         spell_harm = F.GetSpellInfo(spell_harm)
     else
         spell_harm = nil
     end
-    if spell_dead and IsSpellKnownOrOverridesKnown(spell_dead) then
+    if spell_dead and IsSpellKnown(spell_dead) then
         spell_dead = F.GetSpellInfo(spell_dead)
     else
         spell_dead = nil
     end
-    if spell_pet and IsSpellKnownOrOverridesKnown(spell_pet) then
+    if spell_pet and IsSpellKnown(spell_pet) then
         spell_pet = F.GetSpellInfo(spell_pet)
     else
         spell_pet = nil
@@ -2466,6 +2465,9 @@ local function DELAYED_SPELLS_CHANGED()
     timer = C_Timer.NewTimer(1, SPELLS_CHANGED)
 end
 
+rc:RegisterEvent("SPELLS_CHANGED")
+rc:RegisterEvent("PLAYER_LOGIN")
+rc:RegisterEvent("PLAYER_ENTERING_WORLD")
 rc:SetScript("OnEvent", DELAYED_SPELLS_CHANGED)
 
 function F.IsInRange(unit, check)
