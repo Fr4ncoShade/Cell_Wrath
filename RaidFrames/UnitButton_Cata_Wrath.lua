@@ -2028,8 +2028,8 @@ local function UnitButton_UpdateHealPrediction(self)
 		local unitGUID = UnitGUID(unit)
 		if unitGUID then
 			local healAmount = HealComm:GetHealAmount(unitGUID, HealComm.ALL_HEALS) or 0
-			--local healModifier = HealComm:GetHealModifier(unitGUID) or 1
-			--value = healAmount * healModifier
+			local healModifier = HealComm:GetHealModifier(unitGUID) or 1
+			value = healAmount * healModifier
 		end
 	end
 
@@ -2694,6 +2694,37 @@ local function UpdateCLEU()
 end
 Cell.RegisterCallback("UpdateCLEU", "UnitButton_UpdateCLEU", UpdateCLEU)
 
+if HealComm then
+	local function HealCommUpdateByGUID(...)
+		for i = 1, select("#", ...) do
+			local guid = select(i, ...)
+			if guid then
+				-- Find unit buttons with this GUID and update them
+				F.IterateAllUnitButtons(function(b)
+					if b.states.displayedUnit and UnitGUID(b.states.displayedUnit) == guid then
+						UnitButton_UpdateHealPrediction(b)
+					end
+				end)
+			end
+		end
+	end
+
+	local function HealComm_Heal_Update(event, casterGUID, spellID, healType, _, ...)
+		HealCommUpdateByGUID(...)
+	end
+
+	local function HealComm_Modified(event, guid)
+		HealCommUpdateByGUID(guid)
+	end
+
+	HealComm.RegisterCallback("Cell_UnitButton", "HealComm_HealStarted", HealComm_Heal_Update)
+	HealComm.RegisterCallback("Cell_UnitButton", "HealComm_HealUpdated", HealComm_Heal_Update)
+	HealComm.RegisterCallback("Cell_UnitButton", "HealComm_HealDelayed", HealComm_Heal_Update)
+	HealComm.RegisterCallback("Cell_UnitButton", "HealComm_HealStopped", HealComm_Heal_Update)
+	HealComm.RegisterCallback("Cell_UnitButton", "HealComm_ModifierChanged", HealComm_Modified)
+	HealComm.RegisterCallback("Cell_UnitButton", "HealComm_GUIDDisappeared", HealComm_Modified)
+end
+
 -------------------------------------------------
 -- translit names
 -------------------------------------------------
@@ -2852,117 +2883,127 @@ local function UnitButton_UnregisterEvents(self)
 end
 
 local function UnitButton_OnEvent(self, event, unit, ...)
-    -- print(event, self:GetName(), unit, self.states.displayedUnit, self.states.unit)
-    -- if UnitExists(unit) and (UnitIsUnit(unit, self.states.displayedUnit) or UnitIsUnit(unit, self.states.unit)) then
-    if unit and (self.states.displayedUnit == unit or self.states.unit == unit or UnitIsUnit(unit, self.states.displayedUnit)) then
-        if  event == "UNIT_ENTERED_VEHICLE" or event == "UNIT_EXITED_VEHICLE" or event == "UNIT_CONNECTION" then
-            self._updateRequired = 1
-            self._powerUpdateRequired = 1
+	-- print(event, self:GetName(), unit, self.states.displayedUnit, self.states.unit)
+	-- if UnitExists(unit) and (UnitIsUnit(unit, self.states.displayedUnit) or UnitIsUnit(unit, self.states.unit)) then
+	if
+		type(unit) == "string"
+		and (
+			self.states.displayedUnit == unit
+			or self.states.unit == unit
+			or (
+				type(self.states.displayedUnit) == "string"
+				and UnitIsUnit(unit, self.states.displayedUnit)
+			)
+		)
+	then
+	--------
+		if event == "UNIT_ENTERED_VEHICLE" or event == "UNIT_EXITED_VEHICLE" or event == "UNIT_CONNECTION" then
+			self._updateRequired = 1
+			self._powerUpdateRequired = 1
+		elseif event == "UNIT_NAME_UPDATE" then
+			UnitButton_UpdateName(self)
+			UnitButton_UpdateNameTextColor(self)
+			UnitButton_UpdateHealthColor(self)
+			UnitButton_UpdateHealthTextColor(self)
+			UnitButton_UpdatePowerTextColor(self)
+		elseif event == "UNIT_MAXHEALTH" then
+			UnitButton_UpdateHealthMax(self)
+			UnitButton_UpdateHealth(self)
+			UnitButton_UpdateHealPrediction(self)
+			UnitButton_UpdateShieldAbsorbs(self)
+			UnitButton_UpdateHealAbsorbs(self, true)
+		elseif event == "UNIT_HEALTH" or event == "UNIT_HEALTH_FREQUENT" then
+			UnitButton_UpdateHealth(self)
+			UnitButton_UpdateHealPrediction(self)
+			UnitButton_UpdateShieldAbsorbs(self)
+			UnitButton_UpdateHealAbsorbs(self, true)
+			-- UnitButton_UpdateStatusText(self)
+		elseif
+			event == "UNIT_HEAL_PREDICTION"
+			or event == "UNIT_SPELLCAST_START"
+			or event == "UNIT_SPELLCAST_STOP"
+			or event == "UNIT_SPELLCAST_CHANNEL_START"
+			or event == "UNIT_SPELLCAST_CHANNEL_STOP"
+			or event == "UNIT_SPELLCAST_DELAYED"
+		then
+			UnitButton_UpdateHealPrediction(self)
+		elseif
+			event == "UNIT_MAXPOWER"
+			or event == "UNIT_MAXMANA"
+			or event == "UNIT_MAXRAGE"
+			or event == "UNIT_MAXFOCUS"
+			or event == "UNIT_MAXENERGY"
+			or event == "UNIT_MAXRUNIC_POWER"
+		then
+			UnitButton_UpdatePowerStates(self)
+			UnitButton_UpdatePowerMax(self)
+			UnitButton_UpdatePower(self)
+			UnitButton_UpdatePowerText(self)
+		elseif
+			event == "UNIT_POWER"
+			or event == "UNIT_MANA"
+			or event == "UNIT_RAGE"
+			or event == "UNIT_FOCUS"
+			or event == "UNIT_ENERGY"
+			or event == "UNIT_RUNIC_POWER"
+		then
+			UnitButton_UpdatePowerStates(self)
+			UnitButton_UpdatePower(self)
+			UnitButton_UpdatePowerText(self)
+		elseif event == "UNIT_DISPLAYPOWER" then
+			UnitButton_UpdatePowerStates(self)
+			UnitButton_UpdatePowerMax(self)
+			UnitButton_UpdatePower(self)
+			UnitButton_UpdatePowerType(self)
+			UnitButton_UpdatePowerTextColor(self)
+			UnitButton_UpdatePowerText(self)
+		elseif event == "UNIT_AURA" then
+			UnitButton_UpdateAuras(self)
+		elseif event == "UNIT_TARGET" then
+			UnitButton_UpdateTargetRaidIcon(self)
+		elseif event == "PLAYER_FLAGS_CHANGED" or event == "UNIT_FLAGS" then
+			UnitButton_UpdateStatusText(self)
+		elseif event == "UNIT_FACTION" then -- mind control
+			UnitButton_UpdateNameTextColor(self)
+			UnitButton_UpdateHealthColor(self)
+		elseif event == "UNIT_THREAT_SITUATION_UPDATE" then
+			UnitButton_UpdateThreat(self)
 
-        elseif event == "UNIT_NAME_UPDATE" then
-            UnitButton_UpdateName(self)
-            UnitButton_UpdateNameTextColor(self)
-            UnitButton_UpdateHealthColor(self)
-            UnitButton_UpdateHealthTextColor(self)
-            UnitButton_UpdatePowerTextColor(self)
+		-- elseif event == "INCOMING_RESURRECT_CHANGED" or event == "UNIT_PHASE" or event == "PARTY_MEMBER_DISABLE" or event == "PARTY_MEMBER_ENABLE" then
+		--     UnitButton_UpdateStatusIcon(self)
+		elseif event == "READY_CHECK_CONFIRM" then
+			UnitButton_UpdateReadyCheck(self)
+		elseif event == "UNIT_PORTRAIT_UPDATE" then -- pet summoned far away
+			if self.states.healthMax == 0 then
+				self._updateRequired = 1
+				self._powerUpdateRequired = 1
+			end
+		end
+	else
+		if event == "GROUP_ROSTER_UPDATE" then
+			self._updateRequired = 1
+			self._powerUpdateRequired = 1
+		elseif event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then
+			UnitButton_UpdateLeader(self, event)
+		elseif event == "PLAYER_TARGET_CHANGED" then
+			UnitButton_UpdateTarget(self)
+			UnitButton_UpdateThreatBar(self)
+		elseif event == "UNIT_THREAT_LIST_UPDATE" then
+			UnitButton_UpdateThreatBar(self)
+		elseif event == "RAID_TARGET_UPDATE" then
+			UnitButton_UpdatePlayerRaidIcon(self)
+			UnitButton_UpdateTargetRaidIcon(self)
+		elseif event == "READY_CHECK" then
+			UnitButton_UpdateReadyCheck(self)
+		elseif event == "READY_CHECK_FINISHED" then
+			UnitButton_FinishReadyCheck(self)
+		elseif event == "ZONE_CHANGED_NEW_AREA" then
+			UnitButton_UpdateStatusText(self)
 
-        elseif event == "UNIT_MAXHEALTH" then
-            UnitButton_UpdateHealthMax(self)
-            UnitButton_UpdateHealth(self)
-            UnitButton_UpdateHealPrediction(self)
-            UnitButton_UpdateShieldAbsorbs(self)
-            UnitButton_UpdateHealAbsorbs(self, true)
-
-        elseif event == "UNIT_HEALTH" or event == "UNIT_HEALTH_FREQUENT" then
-            UnitButton_UpdateHealth(self)
-            UnitButton_UpdateHealPrediction(self)
-            UnitButton_UpdateShieldAbsorbs(self)
-            UnitButton_UpdateHealAbsorbs(self, true)
-            -- UnitButton_UpdateStatusText(self)
-
-        elseif event == "UNIT_HEAL_PREDICTION" or event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_DELAYED" then
-            UnitButton_UpdateHealPrediction(self)
-
-        elseif event == "UNIT_MAXPOWER" then
-            UnitButton_UpdatePowerStates(self)
-            UnitButton_UpdatePowerMax(self)
-            UnitButton_UpdatePower(self)
-            UnitButton_UpdatePowerText(self)
-
-        elseif event == "UNIT_POWER" or event == "UNIT_MANA" or event == "UNIT_RAGE" or event == "UNIT_FOCUS" or event == "UNIT_ENERGY" or event == "UNIT_RUNIC_POWER" then
-            UnitButton_UpdatePowerStates(self)
-            UnitButton_UpdatePower(self)
-            UnitButton_UpdatePowerText(self)
-
-        elseif event == "UNIT_DISPLAYPOWER" then
-            UnitButton_UpdatePowerStates(self)
-            UnitButton_UpdatePowerMax(self)
-            UnitButton_UpdatePower(self)
-            UnitButton_UpdatePowerType(self)
-            UnitButton_UpdatePowerTextColor(self)
-            UnitButton_UpdatePowerText(self)
-
-        elseif event == "UNIT_AURA" then
-            UnitButton_UpdateAuras(self)
-
-        elseif event == "UNIT_TARGET" then
-            UnitButton_UpdateTargetRaidIcon(self)
-
-        elseif event == "PLAYER_FLAGS_CHANGED" or event == "UNIT_FLAGS" then
-            UnitButton_UpdateStatusText(self)
-
-        elseif event == "UNIT_FACTION" then -- mind control
-            UnitButton_UpdateNameTextColor(self)
-            UnitButton_UpdateHealthColor(self)
-
-        elseif event == "UNIT_THREAT_SITUATION_UPDATE" then
-            UnitButton_UpdateThreat(self)
-
-        -- elseif event == "INCOMING_RESURRECT_CHANGED" or event == "UNIT_PHASE" or event == "PARTY_MEMBER_DISABLE" or event == "PARTY_MEMBER_ENABLE" then
-        --     UnitButton_UpdateStatusIcon(self)
-
-        elseif event == "READY_CHECK_CONFIRM" then
-            UnitButton_UpdateReadyCheck(self)
-
-        elseif event == "UNIT_PORTRAIT_UPDATE" then -- pet summoned far away
-            if self.states.healthMax == 0 then
-                self._updateRequired = 1
-                self._powerUpdateRequired = 1
-            end
-        end
-
-    else
-        if event == "GROUP_ROSTER_UPDATE" then
-            self._updateRequired = 1
-            self._powerUpdateRequired = 1
-
-        elseif event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then
-            UnitButton_UpdateLeader(self, event)
-
-        elseif event == "PLAYER_TARGET_CHANGED" then
-            UnitButton_UpdateTarget(self)
-            UnitButton_UpdateThreatBar(self)
-
-        elseif event == "UNIT_THREAT_LIST_UPDATE" then
-            UnitButton_UpdateThreatBar(self)
-
-        elseif event == "RAID_TARGET_UPDATE" then
-            UnitButton_UpdatePlayerRaidIcon(self)
-            UnitButton_UpdateTargetRaidIcon(self)
-
-        elseif event == "READY_CHECK" then
-            UnitButton_UpdateReadyCheck(self)
-
-        elseif event == "READY_CHECK_FINISHED" then
-            UnitButton_FinishReadyCheck(self)
-
-        elseif event == "ZONE_CHANGED_NEW_AREA" then
-            UnitButton_UpdateStatusText(self)
-
-        -- elseif event == "VOICE_CHAT_CHANNEL_ACTIVATED" or event == "VOICE_CHAT_CHANNEL_DEACTIVATED" then
-        -- 	VOICE_CHAT_CHANNEL_MEMBER_SPEAKING_STATE_CHANGED
-        end
-    end
+			-- elseif event == "VOICE_CHAT_CHANNEL_ACTIVATED" or event == "VOICE_CHAT_CHANNEL_DEACTIVATED" then
+			-- 	VOICE_CHAT_CHANNEL_MEMBER_SPEAKING_STATE_CHANGED
+		end
+	end
 end
 
 local timer
