@@ -2291,7 +2291,7 @@ local UnitInRange = UnitInRange
 local UnitCanAssist = UnitCanAssist
 local UnitCanAttack = UnitCanAttack
 local UnitCanCooperate = UnitCanCooperate
-local IsSpellInRange = (C_Spell and C_Spell.IsSpellInRange) and C_Spell.IsSpellInRange or IsSpellInRange
+local IsSpellInRange = IsSpellInRange
 local IsItemInRange = (C_Spell and C_Item.IsItemInRange) and C_Item.IsItemInRange or IsItemInRange
 local CheckInteractDistance = CheckInteractDistance
 local UnitIsDead = UnitIsDead
@@ -2411,15 +2411,8 @@ local harmItems = {
 --     end
 -- end
 
-local UnitInSpellRange
-if C_Spell and C_Spell.IsSpellInRange then
-    UnitInSpellRange = function(spellName, unit)
-        return IsSpellInRange(spellName, unit)
-    end
-else
-    UnitInSpellRange = function(spellName, unit)
-        return IsSpellInRange(spellName, unit) == 1
-    end
+local UnitInSpellRange = function(spellName, unit)
+    return IsSpellInRange(spellName, unit) == 1
 end
 
 local rc = CreateFrame("Frame")
