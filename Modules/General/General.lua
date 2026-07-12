@@ -239,7 +239,13 @@ local function CreateNicknamePane()
     nicknameEB:SetPoint("TOPLEFT", 5, -27)
     nicknameEB:SetScript("OnTextChanged", function(self, userChanged)
         local text = strtrim(nicknameEB:GetText())
-        nicknameEB.tip:SetShown(text == "")
+        --nicknameEB.tip:SetShown(text == "")
+		if text == "" then
+			nicknameEB.tip:Show()
+		else
+			nicknameEB.tip:Hide()
+		end
+
 
         if userChanged then
             if CellDB["nicknames"]["mine"] ~= "" then -- already set a nickname
