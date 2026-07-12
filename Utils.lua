@@ -2310,7 +2310,7 @@ else
     UnitInSamePhase = UnitInPhase
 end
 
-local playerClass = UnitClassBase("player")
+local _, playerClass = UnitClassBase("player")
 
 local friendSpells = {
     -- ["DEATHKNIGHT"] = 47541,
@@ -2616,8 +2616,4 @@ function SlashCmdList.CELLRC()
 end
 
 ---------------------------------------------------------------------
--- spec data
----------------------------------------------------------------------
-if Cell.isMists then
 
-end
