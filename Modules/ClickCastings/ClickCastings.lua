@@ -1047,22 +1047,6 @@ local function ShowActionsMenu(index, b)
                 peb:SetNumeric(false)
             end,
         })
-        tinsert(items, {
-            ["text"] = L["Extra Action Button"],
-            ["onClick"] = function()
-                changed[index] = changed[index] or {b}
-                local macrotext = "/stopcasting\n/target mouseover\n/click ExtraActionButton1\n/targetlasttarget"
-                if b.bindAction ~= macrotext then
-                    changed[index]["bindAction"] = macrotext
-                    b.actionGrid:SetText(macrotext)
-                else
-                    changed[index]["bindAction"] = nil
-                    b.actionGrid:SetText(b.bindAction)
-                end
-                CheckChanged(index, b)
-                CheckChanges()
-            end,
-        })
 
         if (Cell.isVanilla or Cell.isWrath or Cell.isCata) and Cell.vars.playerClass == "WARLOCK" then
             tinsert(items, {
