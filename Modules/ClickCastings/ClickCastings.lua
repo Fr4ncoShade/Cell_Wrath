@@ -533,7 +533,7 @@ function F.UpdateClickCastOnFrame(frame, snippet)
     end
 end
 
-function F.UpdateClickCastings(noReload, onlyqueued)
+function F.UpdateClickCastings(noReload)
     F.Debug("|cff77ff77UpdateClickCastings:|r useCommon:", Cell.vars.clickCastings["useCommon"])
     clickCastingTable = Cell.vars.clickCastings["useCommon"] and Cell.vars.clickCastings["common"] or Cell.vars.clickCastings[Cell.vars.playerSpecID]
 
@@ -543,7 +543,21 @@ function F.UpdateClickCastings(noReload, onlyqueued)
     else
         alwaysTargeting = "disabled"
     end
+----------------------------------------------------------------	
+--maybe?
+--[[
+	local profileKey = Cell.vars.clickCastings["useCommon"]
+		and "common"
+		or Cell.vars.playerSpecID
 
+	clickCastingTable = Cell.vars.clickCastings[profileKey]
+
+	alwaysTargeting =
+		Cell.vars.clickCastings["alwaysTargeting"]
+		and Cell.vars.clickCastings["alwaysTargeting"][profileKey]
+		or "disabled"
+]]
+----------------------------------------------------------------
     smartResurrection = Cell.vars.clickCastings["smartResurrection"]
 
     if not noReload then
@@ -557,25 +571,6 @@ function F.UpdateClickCastings(noReload, onlyqueued)
     local snippet = F.GetBindingSnippet()
     F.Debug(snippet)
 
-    -- REVIEW:
-    -- local clickFrames = Cell.clickCastFrames
-    -- if onlyqueued then
-    --     clickFrames = Cell.clickCastFrameQueue
-    -- end
-    -- for b, val in pairs(clickFrames) do
-    --     Cell.clickCastFrameQueue[b] = nil
-    --     -- clear if attribute already set
-    --     ClearClickCastings(b)
-    --     if val then
-    --         -- update bindingClicks
-    --         b:SetAttribute("snippet", snippet)
-    --         SetBindingClicks(b)
-
-    --         -- load db and set attribute
-    --         ApplyClickCastings(b)
-    --     end
-    -- end
-
     F.IterateAllUnitButtons(function(b)
         F.UpdateClickCastOnFrame(b, snippet)
     end, false, true)
@@ -583,11 +578,6 @@ function F.UpdateClickCastings(noReload, onlyqueued)
     previousClickCastings = F.Copy(clickCastingTable)
 end
 Cell.RegisterCallback("UpdateClickCastings", "UpdateClickCastings", F.UpdateClickCastings)
-
-local function UpdateQueuedClickCastings()
-    UpdateClickCastings(true, true)
-end
-Cell.RegisterCallback("UpdateQueuedClickCastings", "UpdateQueuedClickCastings", UpdateQueuedClickCastings)
 
 -------------------------------------------------
 -- profiles dropdown
