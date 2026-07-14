@@ -171,7 +171,7 @@ local defaultSpells = {
         },
     },
 }
-
+--[[
 function F.GetClickCastingSpellList(class)
     local spells = defaultSpells[class]["common"] and F.Copy(defaultSpells[class]["common"]) or {}
 
@@ -194,7 +194,39 @@ function F.GetClickCastingSpellList(class)
     -- texplore(spells)
     return spells
 end
+]]
+function F.GetClickCastingSpellList(class)
+	local spells = defaultSpells[class]["common"] and F.Copy(defaultSpells[class]["common"]) or {}
+	local result = {}
+	
+	-- fill data
+	for _, v in pairs(spells) do
+		local spellId, spellType
 
+		if type(v) == "number" then
+			spellId = v
+		else
+			spellId, spellType = strmatch(v, "(%d+)(%a)")
+			spellId = tonumber(spellId)
+			spellType = L[spellType]
+		end
+
+		local name, icon = F.GetSpellInfo(spellId)
+
+		if name and IsSpellKnown(spellId) then
+			tinsert(result, {
+				icon,
+				name,
+				spellType,
+				spellId,
+				F.GetMaxSpellRank(spellId)
+			})
+		end
+	end
+	
+	-- texplore(spells)
+	return result
+end
 -------------------------------------------------
 -- resurrections
 -------------------------------------------------
