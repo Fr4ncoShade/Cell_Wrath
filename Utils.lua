@@ -143,32 +143,23 @@ end
 -------------------------------------------------
 -- Classic
 -------------------------------------------------
-if Cell.isCata then
-    function F.GetActiveTalentInfo()
-        local which = GetActiveTalentGroup() == 1 and L["Primary Talents"] or L["Secondary Talents"]
-        return which, Cell.vars.playerSpecIcon, Cell.vars.playerSpecName
-    end
+function F.GetActiveTalentInfo()
 
-elseif Cell.isWrath or Cell.isVanilla then
-    function F.GetActiveTalentInfo()
-        local which = GetActiveTalentGroup() == 1 and L["Primary Talents"] or L["Secondary Talents"]
+	local maxPoints = 0
+	local specName, specIcon
 
-        local maxPoints = 0
-        local specName, specIcon, specFileName
+	for i = 1, GetNumTalentTabs() do
+		local name, icon, pointsSpent = GetTalentTabInfo(i)
+		if pointsSpent > maxPoints then
+			maxPoints = pointsSpent
+			specIcon = icon
+			specName = name
+		-- elseif pointsSpent == maxPoints then
+		--     specIcon = 132148
+		end
+	end
 
-        for i = 1, GetNumTalentTabs() do
-            local id, name, description, icon, pointsSpent, background = GetTalentTabInfo(i)
-            if pointsSpent > maxPoints then
-                maxPoints = pointsSpent
-                specIcon = icon
-                specName = name
-            -- elseif pointsSpent == maxPoints then
-            --     specIcon = 132148
-            end
-        end
-
-        return which, specIcon or 134400, specName or L["No Spec"]
-    end
+	return specIcon or "Interface\\Icons\\INV_Misc_QuestionMark", specName or L["No Spec"]
 end
 
 -- local specRoles = {
@@ -926,22 +917,6 @@ end
 -------------------------------------------------
 local combinedHeader = "CellRaidFrameHeader0"
 local separatedHeaders = {"CellRaidFrameHeader1", "CellRaidFrameHeader2", "CellRaidFrameHeader3", "CellRaidFrameHeader4", "CellRaidFrameHeader5", "CellRaidFrameHeader6", "CellRaidFrameHeader7", "CellRaidFrameHeader8"}
-
--- REVIEW:
--- Cell.clickCastFrames = {}
--- Cell.clickCastFrameQueue = {}
-
--- function F.RegisterFrame(frame)
---     Cell.clickCastFrames[frame] = true
---     Cell.clickCastFrameQueue[frame] = true  -- put into queue
---     Cell.Fire("UpdateQueuedClickCastings")
--- end
-
--- function F.UnregisterFrame(frame)
---     Cell.clickCastFrames[frame] = nil       -- ignore
---     Cell.clickCastFrameQueue[frame] = false -- mark for only cleanup
---     Cell.Fire("UpdateQueuedClickCastings")
--- end
 
 function F.IterateAllUnitButtons(func, updateCurrentGroupOnly, updateQuickAssists, skipShared)
     -- solo
@@ -2085,7 +2060,7 @@ mc:SetScript("OnEvent", function()
         tinsert(macroIndices, i)
     end
     for i = 1, perChar do
-        tinsert(macroIndices, 120 + i)
+        tinsert(macroIndices, 36 + i)
     end
 end)
 
@@ -2305,7 +2280,7 @@ local _, playerClass = UnitClassBase("player")
 
 local friendSpells = {
     -- ["DEATHKNIGHT"] = 47541,
-    ["DRUID"] = (Cell.isWrath or Cell.isVanilla) and 5185 or 8936,
+    ["DRUID"] = 774,
     -- ["HUNTER"] = 136,
     ["MAGE"] = 1459,
     ["PALADIN"] = 635,
