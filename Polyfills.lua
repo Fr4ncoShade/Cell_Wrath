@@ -1168,13 +1168,6 @@ if not C_Item then
     function C_Item.IsItemInRange(itemId, unit)
         return IsItemInRange(itemId, unit)
     end
-    function C_Item.IsUsableItem(itemId)
-        return IsUsableItem(itemId)
-    end
-elseif not C_Item.IsUsableItem then
-    function C_Item.IsUsableItem(itemId)
-        return IsUsableItem(itemId)
-    end
 end
 
 -------------------------------------------------
