@@ -1048,7 +1048,7 @@ local function ShowActionsMenu(index, b)
             end,
         })
 
-        if (Cell.isVanilla or Cell.isWrath or Cell.isCata) and Cell.vars.playerClass == "WARLOCK" then
+		if Cell.vars.playerClass == "WARLOCK" then
             tinsert(items, {
                 ["text"] = F.GetSpellInfo(20707),
                 ["onClick"] = function()
@@ -1093,7 +1093,7 @@ local function ShowActionsMenu(index, b)
     elseif bindType == "item" then
         items = {}
 
-        for _, slot in ipairs({13, 14, 6, 9, 10}) do
+        for _, slot in ipairs({13, 14, 6, 8, 10}) do
             tinsert(items, {
                 ["text"] = slotNames[slot],
                 ["onClick"] = function()
@@ -1113,7 +1113,7 @@ local function ShowActionsMenu(index, b)
 
         for slot = 1, 17 do
             local itemId = GetInventoryItemID("player", slot)
-            if itemId and C_Item.IsUsableItem(itemId) then
+            if itemId and IsUsableItem(itemId) then
                 local text = GetInventoryItemLink("player", slot) or ""
                 text = string.gsub(text, "[%[%]]", "")
 
@@ -1135,23 +1135,6 @@ local function ShowActionsMenu(index, b)
                 })
             end
         end
-
-    -- elseif bindType == "click" then
-    --     items = {{
-    --             ["text"] = "ExtraActionButton1",
-    --             ["onClick"] = function()
-    --                 changed[index] = changed[index] or {b}
-    --                 if b.bindAction ~= "ExtraActionButton1" then
-    --                     changed[index]["bindAction"] = "ExtraActionButton1"
-    --                     b.actionGrid:SetText("ExtraActionButton1")
-    --                 else
-    --                     changed[index]["bindAction"] = nil
-    --                     b.actionGrid:SetText(b.bindAction)
-    --                 end
-    --                 CheckChanged(index, b)
-    --                 CheckChanges()
-    --             end,
-    --     }}
 
     else -- spell
         items = {
