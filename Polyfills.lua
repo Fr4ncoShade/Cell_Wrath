@@ -601,15 +601,6 @@ if not UnitClassBase then
     end
 end
 
--- GetSpellBookItemName (doesn't exist in WotLK 3.3.5)
--- In WotLK, use GetSpellInfo(index, bookType) which returns name as first value
-if not GetSpellBookItemName then
-    function GetSpellBookItemName(index, bookType)
-        local spellName = GetSpellInfo(index, bookType)
-        return spellName
-    end
-end
-
 -- Ambiguate (doesn't exist in WotLK 3.3.5)
 -- In retail, Ambiguate formats player names by removing/keeping realm suffixes
 -- In WotLK, we implement a simple version
