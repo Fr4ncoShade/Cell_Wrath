@@ -1200,7 +1200,7 @@ local function ShowActionsMenu(index, b)
         }
 
         -- default spells
-        local spells = F.GetClickCastingSpellList(Cell.vars.playerClass, Cell.vars.playerSpecID)
+        local spells = F.GetClickCastingSpellList(Cell.vars.playerClass)
         -- texplore(spells)
         -- {icon, name, type(C/S/P), id}
 
@@ -1271,16 +1271,12 @@ local CreateBindingListButton
 local last
 
 local function UpdateCurrentText(isCommon)
-    if isCommon then
-        listPane:SetTitle(L["Current Profile"]..": "..L["Common"])
-    else
-        if Cell.isRetail or Cell.isMists then
-            listPane:SetTitle(L["Current Profile"]..": ".."|T"..Cell.vars.playerSpecIcon..":12:12:0:1:12:12:1:11:1:11|t "..Cell.vars.playerSpecName)
-        elseif Cell.isCata or Cell.isWrath or Cell.isVanilla then
-            local name, icon = F.GetActiveTalentInfo()
-            listPane:SetTitle(L["Current Profile"]..": ".."|T"..icon..":12:12:0:1:12:12:1:11:1:11|t "..name)
-        end
-    end
+	if isCommon then
+		listPane:SetTitle(L["Current Profile"]..": "..L["Common"])
+	else
+		local icon, specName = F.GetActiveTalentInfo()
+		listPane:SetTitle(L["Current Profile"]..": ".."|T"..icon..":12:12:0:1:12:12:1:11:1:11|t "..specName)
+	end
 end
 
 local function CreateListPane()
