@@ -1977,42 +1977,32 @@ if Cell.isWrath or Cell.isVanilla then
         return FORMAT_PATTERN:format(rank)
     end
 
-    function F.GetMaxSpellRank(spellId)
-        local spellName = select(1, GetSpellInfo(spellId))
-        if not spellName then return end
+	function F.GetMaxSpellRank(spellId)
+		local spellName = select(1, GetSpellInfo(spellId))
+		if not spellName then return end
 
-        local maxRank = 0
-        local bookType = BOOKTYPE_SPELL
+		local maxRank = 0
 
-        local totalSpells = 0
-        for tab = 1, GetNumSpellTabs() do
-            local name, texture, offset, numSpells = GetSpellTabInfo(tab)
-            totalSpells = totalSpells + numSpells
-        end
+		local totalSpells = 0
+		for tab = 1, GetNumSpellTabs() do
+			local _, _, offset, numSpells = GetSpellTabInfo(tab)
+			totalSpells = totalSpells + numSpells
+		end
 
-        -- local spellSubText
-        for i = 1, totalSpells do
-            local name, subText = GetSpellBookItemName(i, bookType)
-            if name == spellName and subText then
-                local rank = tonumber(subText:match(MATCH_PATTERN))
-                -- spellSubText = subText
-                if rank and rank > maxRank then
-                    maxRank = rank
-                end
-            end
-        end
+		for i = 1, totalSpells do
+			local name, rankText = GetSpellName(i, BOOKTYPE_SPELL)
 
-        -- if spellSubText then
-        --     print("----------------------------------------------")
-        --     print(spellSubText, MATCH_PATTERN, tonumber(spellSubText:match(MATCH_PATTERN)))
-        --     print("Max Rank of " .. spellName .. ": " .. maxRank)
-        --     print("----------------------------------------------")
-        -- else
-        --     print("Rank info not found: " .. spellName)
-        -- end
+			if name == spellName and rankText then
+				local rank = tonumber(rankText:match(MATCH_PATTERN))
 
-        return maxRank
-    end
+				if rank and rank > maxRank then
+					maxRank = rank
+				end
+			end
+		end
+
+		return maxRank
+	end
 end
 
 if C_Spell.GetSpellCooldown then
