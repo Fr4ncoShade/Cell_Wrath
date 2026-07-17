@@ -142,16 +142,7 @@ local FramePoolResetter = function(framePool,frame)
             GlowTexPool:Release(texture)
         end
     end
-    if frame.bg then
-        GlowTexPool:Release(frame.bg)
-        frame.bg = nil
-    end
-    if frame.masks then
-        for _,mask in pairs(frame.masks) do
-            GlowMaskPool:Release(mask)
-        end
-        frame.masks = nil
-    end
+
     frame.textures = {}
     frame.info = {}
     frame.name = nil
@@ -301,14 +292,6 @@ local  pUpdate = function(self,elapsed)
             self.masks[1]:SetPoint("TOPLEFT",self,"TOPLEFT",self.info.th,-self.info.th)
             self.masks[1]:SetPoint("BOTTOMRIGHT",self,"BOTTOMRIGHT",-self.info.th,self.info.th)
         end
-        if self.masks[2] and not(self.masks[2]:IsShown()) then
-            self.masks[2]:Show()
-            self.masks[2]:SetPoint("TOPLEFT",self,"TOPLEFT",self.info.th+1,-self.info.th-1)
-            self.masks[2]:SetPoint("BOTTOMRIGHT",self,"BOTTOMRIGHT",-self.info.th-1,self.info.th+1)
-        end
-        if self.bg and not(self.bg:IsShown()) then
-            self.bg:Show()
-        end
         for k,line  in pairs(self.textures) do
             line:SetPoint("TOPLEFT",self,"TOPLEFT",pCalc1((progress+self.info.step*(k-1))%1,width,self.info.th,self.info.pTLx),-pCalc2((progress+self.info.step*(k-1))%1,height,self.info.th,self.info.pTLy))
             line:SetPoint("BOTTOMRIGHT",self,"TOPLEFT",self.info.th+pCalc2((progress+self.info.step*(k-1))%1,width,self.info.th,self.info.pBRx),-height+pCalc1((progress+self.info.step*(k-1))%1,height,self.info.th,self.info.pBRy))
@@ -358,36 +341,7 @@ function lib.PixelGlow_Start(r,color,N,frequency,length,th,xOffset,yOffset,borde
     end
     f.masks[1]:SetPoint("TOPLEFT",f,"TOPLEFT",th,-th)
     f.masks[1]:SetPoint("BOTTOMRIGHT",f,"BOTTOMRIGHT",-th,th)
-
-    if not(border==false) then
-        if not f.masks[2] then
-            f.masks[2] = GlowMaskPool:Acquire()
-            f.masks[2]:SetTexture(textureList.empty, "CLAMPTOWHITE","CLAMPTOWHITE")
-        end
-        f.masks[2]:SetPoint("TOPLEFT",f,"TOPLEFT",th+1,-th-1)
-        f.masks[2]:SetPoint("BOTTOMRIGHT",f,"BOTTOMRIGHT",-th-1,th+1)
-
-        if not f.bg then
-            f.bg = GlowTexPool:Acquire()
-            f.bg:SetColorTexture(0.1,0.1,0.1,0.8)
-            f.bg:SetParent(f)
-            f.bg:SetAllPoints(f)
-            f.bg:SetDrawLayer("ARTWORK",6)
-            -- WotLK: AddMaskTexture may not exist
-            if f.bg.AddMaskTexture then
-                f.bg:AddMaskTexture(f.masks[2])
-            end
-        end
-    else
-        if f.bg then
-            GlowTexPool:Release(f.bg)
-            f.bg = nil
-        end
-        if f.masks[2] then
-            GlowMaskPool:Release(f.masks[2])
-            f.masks[2] = nil
-        end
-    end
+	
     for _,tex in pairs(f.textures) do
         -- WotLK: GetNumMaskTextures and AddMaskTexture may not exist
         if tex.GetNumMaskTextures and tex.AddMaskTexture then
