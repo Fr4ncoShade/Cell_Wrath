@@ -208,7 +208,7 @@ end
 
 local wrapFrame = CreateFrame("Frame", "CellWrapFrame", nil, "SecureHandlerStateTemplate")
 wrapFrame:SetAttribute("_onstate-mouseoverstate", [[
-    -- print("mouseoverstate", newstate)
+	-- print("mouseoverstate", newstate)
     if newstate == "false" and mouseoverbutton then
         if not mouseoverbutton:IsUnderMouse() then
             mouseoverbutton:ClearBindings()
@@ -219,16 +219,26 @@ wrapFrame:SetAttribute("_onstate-mouseoverstate", [[
 --! NOTE: not available for unit far away (different map)
 RegisterStateDriver(wrapFrame, "mouseoverstate", "[@mouseover, exists] true; false")
 
---! update togglemenu_nocombat
+--! Insecure combat state updater
+--! Updates "cell-combatstate" attribute on all unit buttons when entering/leaving combat
+local combatUpdater = CreateFrame("Frame")
+combatUpdater:RegisterEvent("PLAYER_REGEN_ENABLED")
+combatUpdater:RegisterEvent("PLAYER_REGEN_DISABLED")
+combatUpdater:SetScript("OnEvent", function(self, event)
+    local inCombat = event == "PLAYER_REGEN_DISABLED"
+    F.IterateAllUnitButtons(function(button)
+        button:SetAttribute("cell-combatstate", inCombat and "true" or "false")
+    end, false, true)
+end)
+
 wrapFrame:SetAttribute("_onstate-combatstate", [[
-    -- print("combatstate", newstate)
     if mouseoverbutton then
         local menuKey = mouseoverbutton:GetAttribute("menu")
         if menuKey then
             if newstate == "true" then
                 mouseoverbutton:SetAttribute(menuKey, nil)
             else
-                mouseoverbutton:SetAttribute(menuKey, "togglemenu")
+                mouseoverbutton:SetAttribute(menuKey, "menu")
             end
         end
     end
@@ -240,12 +250,12 @@ SetBindingClicks = function(b, snippet)
     snippet = snippet or ""
 
     local onEnter = [[
-        -- print("_onenter")
+		-- print("_onenter")
         self:ClearBindings()
-
+		
 ]] .. snippet .. [[
 
-        --! vehicle
+		--! vehicle
         local unit = self:GetAttribute("unit")
         local vehicle
         if UnitHasVehicleUI(unit) then
@@ -257,8 +267,8 @@ SetBindingClicks = function(b, snippet)
                 vehicle = string.gsub(unit, "raid", "raidpet")
             end
         end
-
-        --! update click-casting unit
+		
+		--! update click-casting unit
         local clickCastingUnit = vehicle or unit
         local attrs = self:GetAttribute("cell")
         if attrs then
@@ -268,12 +278,16 @@ SetBindingClicks = function(b, snippet)
         end
 
         --! update togglemenu
+        -- NOTE: UnitAffectingCombat is NOT available in SecureHandlers in WoW 3.3.5!
+        -- We use the 'cell-combatstate' attribute set by insecure code via PLAYER_REGEN events
+        local combatState = self:GetAttribute("cell-combatstate")
+        
         local menuKey = self:GetAttribute("menu")
         if menuKey then
-            if UnitAffectingCombat("player") then
+            if combatState == "true" then
                 self:SetAttribute(menuKey, nil)
             else
-                self:SetAttribute(menuKey, "togglemenu")
+                self:SetAttribute(menuKey, "menu")
             end
         end
     ]]
@@ -281,36 +295,35 @@ SetBindingClicks = function(b, snippet)
     b:SetAttribute("_onenter", onEnter)
 
     wrapFrame:WrapScript(b, "OnEnter", [[
-        -- print("OnEnter")
         if mouseoverbutton then
-            --! NOTE: mouse moved from inaccessible unit to another frame,
-            -- bindings from previous button may remain active
+			--! NOTE: mouse moved from inaccessible unit to another frame,
+			-- bindings from previous button may remain active
             mouseoverbutton:ClearBindings()
-
-            --! vehicle (previous button)
+			
+			--! vehicle (previous button)
             local oldUnit = mouseoverbutton:GetAttribute("oldUnit")
             if oldUnit then
-                -- print("wrap restore unit")
+				-- print("wrap restore unit")
                 mouseoverbutton:SetAttribute("unit", oldUnit)
                 mouseoverbutton:SetAttribute("oldUnit", nil)
             end
         end
         mouseoverbutton = self
     ]])
-
-    --! NOTE: if another frame shows in front of b, _onleave will NOT trigger.
+	
+	--! NOTE: if another frame shows in front of b, _onleave will NOT trigger.
     b:SetAttribute("_onleave", [[
-        -- print("_onleave")
+		-- print("_onleave")
         self:ClearBindings()
     ]])
 
     b:SetAttribute("_onhide", [[
         self:ClearBindings()
-
-        --! vehicle
+		
+		--! vehicle
         local oldUnit = self:GetAttribute("oldUnit")
         if oldUnit then
-            -- print("restore unit")
+			-- print("restore unit")
             self:SetAttribute("oldUnit", nil)
             self:SetAttribute("unit", oldUnit)
         end
@@ -440,14 +453,9 @@ local function ApplyClickCastings(b)
 
         if t[2] == "togglemenu_nocombat" then
             b:SetAttribute("menu", bindKey)
-        ------------------------------------------------------------------
-        --* 已修复：实际上载具（宠物按钮）无法选中的原因是没有 SetAttribute("toggleForVehicle", false)
-        -- elseif Cell.isCata and t[2] == "target" then
-        --     b:SetAttribute(bindKey, "macro")
-        --     local attr = string.gsub(bindKey, "type", "macrotext")
-        --     b:SetAttribute(attr, "/tar [@cell]")
-        --     UpdatePlaceholder(b, attr)
-        ------------------------------------------------------------------
+            b:SetAttribute(bindKey, "menu")
+        elseif t[2] == "togglemenu" then
+            b:SetAttribute(bindKey, "menu")
         else
             b:SetAttribute(bindKey, t[2])
         end
@@ -1468,9 +1476,9 @@ CreateBindingListButton = function(modifier, bindKey, bindType, bindAction, i)
         if name then
             b.bindActionDisplay = name
             b:ShowIcon(icon)
-        elseif bindAction ~= "" then -- maybe deleted
-            b.bindActionDisplay = bindAction
-            b:ShowIcon()
+		elseif bindAction ~= "" then -- maybe deleted
+			b.bindActionDisplay = "|cFFFF3030"..bindAction.."|r"
+			b:ShowIcon()
         else -- not bound
             b.bindActionDisplay = ""
             b:HideIcon()
@@ -1591,18 +1599,8 @@ function CheckConflicts()
             "\n|cFFFF3030"..L["Yes"].."|r - "..L["Remove"].."\n".."|cFFFF3030"..L["No"].."|r - "..L["Cancel"]
 
         local popup = Cell.CreateConfirmPopup(clickCastingsTab, 200, msg, function(self)
-            if Cell.isRetail then
-                --! NOTE: show-set-hide or commit
-                -- ShowUIPanel(SettingsPanel)
-                -- Settings.OpenToCategory(8)
-                Settings.SetValue("SELFCAST", "NONE", true)
-                -- HideUIPanel(SettingsPanel)
-                SettingsPanel:Commit()
-            else
-                SetModifiedClick("SELFCAST", "NONE")
-                -- SetModifiedClick("FOCUSCAST", "NONE")
-                SaveBindings(GetCurrentBindingSet())
-            end
+			SetModifiedClick("SELFCAST", "NONE")
+			SaveBindings(GetCurrentBindingSet())
         end, nil, true)
         popup:SetPoint("TOPLEFT", 117, -90)
     end
@@ -1633,7 +1631,6 @@ clickCastingsTab:SetScript("OnShow", function()
     CheckConflicts()
 
     if loaded then return end
-
     loaded = true
 
     local isCommon = Cell.vars.clickCastings["useCommon"]
