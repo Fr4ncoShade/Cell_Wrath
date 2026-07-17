@@ -4204,4 +4204,45 @@ function CellUnitButton_OnLoad(button)
     button:SetScript("OnUpdate", UnitButton_OnUpdate)
     button:SetScript("OnEvent", UnitButton_OnEvent)
     button:RegisterForClicks("AnyDown")
+	----------
+
+	local function CellUnitFrame_OpenMenu(self, unit)
+		unit = unit or self:GetAttribute("unit")
+
+		if not unit then
+			return
+		end
+
+		local which = "PLAYER"
+		if UnitIsUnit(unit, "player") then
+			which = "SELF"
+		elseif UnitIsUnit(unit, "pet") then
+			which = "PET"
+		elseif UnitIsPlayer(unit) then
+
+			if UnitInRaid(unit) then
+				which = "RAID_PLAYER"
+			elseif UnitInParty(unit) then
+				which = "PARTY"
+			else
+				which = "PLAYER"
+			end
+
+		elseif UnitIsUnit(unit, "target") then
+			which = "TARGET"
+		elseif UnitIsUnit(unit, "focus") then
+			which = "FOCUS"
+		end
+
+		local dropDown = PlayerFrameDropDown
+		dropDown.initialize = function()
+			UnitPopup_ShowMenu(dropDown, which, unit)
+		end
+		ToggleDropDownMenu(1, nil, dropDown, "cursor")
+
+	end
+
+	button.menu = CellUnitFrame_OpenMenu
+
 end
+
