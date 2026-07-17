@@ -117,12 +117,12 @@ local function CreateDRPane()
     drMacroEB = Cell.CreateEditBox(drPane, 412, 20)
     drMacroEB:SetPoint("TOPLEFT", drResponseDD, "BOTTOMLEFT", 0, -27)
 
-    drMacroEB:SetText("/run C_ChatInfo.SendAddonMessage(\"CELL_REQ_D\",\"D\",\"RAID\")")
+    drMacroEB:SetText("/run SendAddonMessage(\"CELL_REQ_D\",\"D\",\"RAID\")")
     drMacroEB:SetCursorPosition(0)
 
     drMacroEB:SetScript("OnTextChanged", function(self, userChanged)
         if userChanged then
-            drMacroEB:SetText("/run C_ChatInfo.SendAddonMessage(\"CELL_REQ_D\",\"D\",\"RAID\")")
+            drMacroEB:SetText("/run SendAddonMessage(\"CELL_REQ_D\",\"D\",\"RAID\")")
             drMacroEB:SetCursorPosition(0)
             drMacroEB:HighlightText()
         end
@@ -400,49 +400,77 @@ local flipBookFrames = {
 }
 
 function U.CreateDispelRequestText(parent)
-    local drText = CreateFrame("Frame", parent:GetName().."DispelRequestText", parent.widgets.indicatorFrame)
-    parent.widgets.drText = drText
-    --drText:SetIgnoreParentAlpha(true)
+	local targetFrame = parent.widgets and parent.widgets.indicatorFrame or parent
+	local drText = CreateFrame("Frame", parent:GetName().."DispelRequestText", targetFrame)
+
+	if parent.widgets then
+		parent.widgets.drText = drText
+	else
+		parent.drText = drText
+	end
+
 	if drText.SetIgnoreParentAlpha then
 		drText:SetIgnoreParentAlpha(true)
 	end
 
-    drText:SetFrameLevel(parent.widgets.indicatorFrame:GetFrameLevel()+110)
-    drText:Hide()
+	drText:SetFrameLevel(targetFrame:GetFrameLevel()+110)
+	drText:Hide()
 
-    local tex = drText:CreateTexture(nil, "ARTWORK")
-    -- tex:SetTexture("Interface/AddOns/Cell/Media/FlipBooks/dispel.png")
-    --tex:SetAtlas("UI-HUD-ActionBar-GCD-Flipbook")
-    --tex:SetTexture("interface/hud/uiactionbarfx")
-    --tex:SetTexCoord(0.412598, 0.458496, 0.393555, 0.898438) -- NOTE: SetTexCoord will NOT work
-    tex:SetAllPoints(drText)
-    tex:SetParentKey("Flipbook")
+	local tex = drText:CreateTexture(nil, "ARTWORK")
+	tex:SetAllPoints(drText)
 
-    local ag = drText:CreateAnimationGroup()
-    ag:SetLooping("REPEAT")
+	local currentFrame = 0
+	local totalFrames = 31
+	local rows = 8
+	local columns = 4
+	local frameWidth = 1 / columns
+	local frameHeight = 1 / rows
+	local elapsed = 0
+	local fps = 30
+	local interval = 1 / fps
 
-    local flip = ag:CreateAnimation("FlipBook")
-    flip:SetDuration(1)
-    flip:SetFlipBookRows(8)
-    flip:SetFlipBookColumns(4)
-    flip:SetFlipBookFrames(31)
-    --flip:SetFlipBookFrameWidth(0)
-    --flip:SetFlipBookFrameHeight(0)
-    flip:SetChildKey("Flipbook")
+	drText:SetScript("OnUpdate", function(self, dt)
+		if not self:IsShown() then return end
 
-    function drText:Display()
-        drText:Show()
-        ag:Play()
-    end
+		elapsed = elapsed + dt
+		while elapsed >= interval do
+			elapsed = elapsed - interval
+			currentFrame = currentFrame + 1
+			if currentFrame >= totalFrames then
+				currentFrame = 0
+			end
 
-    function drText:SetType(type)
-        tex:SetTexture("Interface/AddOns/Cell/Media/FlipBooks/dispel_"..type..".png")
-        flip:SetFlipBookFrames(flipBookFrames[type])
-    end
+			local col = currentFrame % columns
+			local row = math.floor(currentFrame / columns)
 
-    function drText:SetColor(color)
-        tex:SetVertexColor(unpack(color))
-    end
+			local left = col * frameWidth
+			local right = left + frameWidth
+
+			local top = row * frameHeight
+			local bottom = top + frameHeight
+
+			tex:SetTexCoord(left, right, top, bottom)
+		end
+	end)	
+
+	function drText:Display()
+		drText:Show()
+		currentFrame = 0
+		elapsed = 0
+	end
+
+	function drText:SetType(type)
+		local texturePath = "Interface\\AddOns\\Cell_Wrath\\Media\\FlipBooks\\dispel_"..type..".png"
+		tex:SetTexture(texturePath)
+		totalFrames = flipBookFrames[type] or 31
+		currentFrame = 0
+	end
+
+	function drText:SetColor(color)
+		if color then
+			tex:SetVertexColor(unpack(color))
+		end
+	end
 end
 
 -------------------------------------------------
@@ -450,34 +478,36 @@ end
 -------------------------------------------------
 local init
 local function ShowUtilitySettings(which)
-    if which == "dispelRequest" then
-        if not init then
-            CreateDRPane()
-        end
+	if which == "dispelRequest" then
+		if not init then
+			CreateDRPane()
+		end
 
-        drPane:Show()
+		drPane:Show()
+		
+		if init then return end
+		init = true
 
-        if init then return end
-        init = true
+		-- dispel request settings initialization
+		drEnabledCB:SetChecked(CellDB["dispelRequest"]["enabled"])
+		drDispellableCB:SetChecked(CellDB["dispelRequest"]["dispellableByMe"])
+		drResponseDD:SetSelectedValue(CellDB["dispelRequest"]["responseType"])
+		drTimeoutDD:SetSelected(CellDB["dispelRequest"]["timeout"])
+		drTypeDD:SetSelectedValue(CellDB["dispelRequest"]["type"])
+		UpdateDRWidgets()
+		LoadList()
 
-        -- dispel request
-        drEnabledCB:SetChecked(CellDB["dispelRequest"]["enabled"])
-        drDispellableCB:SetChecked(CellDB["dispelRequest"]["dispellableByMe"])
-        drResponseDD:SetSelectedValue(CellDB["dispelRequest"]["responseType"])
-        drTimeoutDD:SetSelected(CellDB["dispelRequest"]["timeout"])
-        drTypeDD:SetSelectedValue(CellDB["dispelRequest"]["type"])
-        UpdateDRWidgets()
-        LoadList()
+		drType = CellDB["dispelRequest"]["type"]
+		
+		if drType == "text" then
+			drTypeOptionsBtn:SetText(L["Text Options"])            
+		else
+			drTypeOptionsBtn:SetText(L["Glow Options"])
+		end
 
-        drType = CellDB["dispelRequest"]["type"]
-        if drType == "text" then
-            drTypeOptionsBtn:SetText(L["Text Options"])
-        else
-            drTypeOptionsBtn:SetText(L["Glow Options"])
-        end
-
-    elseif init then
-        drPane:Hide()
-    end
+	elseif init then
+		drPane:Hide()
+	end
 end
 Cell.RegisterCallback("ShowUtilitySettings", "DispelRequest_ShowUtilitySettings", ShowUtilitySettings)
+
